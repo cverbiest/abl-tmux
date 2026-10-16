@@ -1,0 +1,244 @@
+#!/usr/bin/env bash
+# abl-tmux.sh — VS Code-like editing workspace in tmux: nvim, claude and a shell.
+# Derived from ~/bin/claude-tmux.sh (its nvim layout).
+#
+#   +-------------------------+-----------+
+#   | nvim                    | claude    |
+#   |                         |           |
+#   +-------------------------+           |
+#   | bash                    |           |
+#   +-------------------------+-----------+
+#
+# claude gets 30% of the width (at least 80 cols from 160 cols up), bash 20%
+# of the height. Runs on its own tmux server (-L abl) with the tmux.conf next
+# to this script, and starts nvim with NVIM_APPNAME=nvim-abl.
+# One session per workspace, named abl-<dirname>. The workspace root is the
+# nearest directory up from DIR with an openedge-project.json (else DIR itself);
+# every pane gets it as $VSCODE_WS. Asks before opening a root without
+# openedge-project.json or APPL.env.
+#
+# Usage: abl-tmux.sh [OPTION] [DIR | FILE.code-workspace]
+#   (no option)     : attach to the session for DIR (default: $PWD), creating it if needed
+#   -l, --list      : list running sessions
+#   --connect       : pick a running session or a workspace under ~/workspaces
+#                     ($ABL_WORKSPACES) with fzf, then open it
+#   -c, --close     : quit nvim, close the session for DIR and stop leftover
+#                     language servers (refuses while nvim has unsaved changes)
+#   -k, --kill      : close the session for DIR without quitting nvim first
+#   -K, --kill-all  : close all sessions (stops the abl tmux server)
+#   -r, --reload    : restart claude in the session for DIR
+#   -V, --version   : show the installed version
+#   -h, --help      : show this help
+set -euo pipefail
+
+usage() { awk 'NR == 1 { next } /^#/ { sub(/^# ?/, ""); print; next } { exit }' "$0"; }
+
+SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
+CONF="$SCRIPT_DIR/tmux.conf"
+SOCKET=${ABL_TMUX_SOCKET:-abl}  # override to test without touching running sessions
+NVIM_APP=nvim-abl
+tm() { tmux -L "$SOCKET" -f "$CONF" "$@"; }
+# claude connects to nvim by itself (--ide) and learns about this setup from claude/abl-tmux.md
+CLAUDE_CMD=(claude --ide)
+CLAUDE_MD=$(readlink -f "$SCRIPT_DIR/../claude/abl-tmux.md" || true)
+[ -f "$CLAUDE_MD" ] && CLAUDE_CMD+=(--append-system-prompt-file "$CLAUDE_MD")
+
+ACTION=open
+case "${1:-}" in
+    -l|--list)     ACTION=list;   shift ;;
+    --connect)     ACTION=connect; shift ;;
+    -c|--close)    ACTION=close;  shift ;;
+    -k|--kill)     ACTION=kill;   shift ;;
+    -K|--kill-all) ACTION=killall; shift ;;
+    -r|--reload)   ACTION=reload; shift ;;
+    -V|--version)  cat "$SCRIPT_DIR/../VERSION" 2>/dev/null || echo "development copy (no VERSION)"; exit 0 ;;
+    -h|--help)     usage; exit 0 ;;
+    -*)            echo "Unknown option: $1" >&2; usage >&2; exit 2 ;;
+esac
+# Sets DIR (the workspace root) and NAME (its session) from a directory or .code-workspace file
+set_dir() {
+    local d
+    DIR=$(readlink -f "$1")
+    case "$DIR" in *.code-workspace) [ -f "$DIR" ] && DIR=$(dirname "$DIR") ;; esac
+    [ -d "$DIR" ] || { echo "Not a directory: $DIR" >&2; exit 1; }
+    # Started in a subdirectory (e.g. one of the git projects): use the workspace root
+    d=$DIR
+    while [ "$d" != / ] && [ ! -f "$d/openedge-project.json" ]; do d=$(dirname "$d"); done
+    [ -f "$d/openedge-project.json" ] && DIR=$d
+    # tmux forbids '.' and ':' in session names
+    NAME="abl-$(basename "$DIR" | tr -c 'A-Za-z0-9_\n-' '_')"
+}
+
+# Running sessions, then the workspaces (directories with an openedge-project.json) under
+# $ABL_WORKSPACES or ~/workspaces that have none; prints the directory picked with fzf.
+# Lines are "state name path"; the path is read back from the picked line.
+pick_workspace() {
+    command -v fzf >/dev/null || { echo "fzf is not installed." >&2; exit 1; }
+    local root=${ABL_WORKSPACES:-$HOME/workspaces} running dir name state line
+    running=$(tm list-sessions -F '#{session_path}' 2>/dev/null || true)
+    line=$({
+        tm list-sessions -F '#{?session_attached,attached,running}	#{session_name}	#{session_path}' 2>/dev/null |
+            while IFS=$'\t' read -r state name dir; do
+                printf '%-8s  %-24s  %s\n' "$state" "$name" "${dir/#$HOME/\~}"
+            done
+        for dir in "$root"/*/openedge-project.json; do
+            [ -f "$dir" ] || continue
+            dir=$(readlink -f "$(dirname "$dir")")
+            grep -qxF "$dir" <<<"$running" && continue
+            printf '%-8s  %-24s  %s\n' new "abl-$(basename "$dir")" "${dir/#$HOME/\~}"
+        done
+    } | fzf --no-sort --prompt 'workspace> ' || true)
+    [ -n "$line" ] || return 0
+    dir=$(sed -E 's/^[^ ]+ +[^ ]+ +//' <<<"$line")
+    echo "${dir/#\~/$HOME}"
+}
+
+if [ "$ACTION" = connect ]; then
+    choice=$(pick_workspace)
+    [ -n "$choice" ] || exit 0  # cancelled
+    set_dir "$choice"
+    ACTION=open
+else
+    set_dir "${1:-$PWD}"
+fi
+
+has_session() { tm has-session -t "=$NAME" 2>/dev/null; }
+
+check_config() {
+    if [ ! -e "$HOME/.config/$NVIM_APP" ]; then
+        echo "~/.config/$NVIM_APP is missing; run $SCRIPT_DIR/../install.sh first." >&2
+        exit 1
+    fi
+}
+
+# A workspace root has these; ask before opening a directory without them
+check_workspace() {
+    local f missing=()
+    for f in openedge-project.json APPL.env; do
+        [ -f "$DIR/$f" ] || missing+=("$f")
+    done
+    [ ${#missing[@]} -eq 0 ] && return 0
+    echo "WARNING: $DIR is missing ${missing[*]}; it may not be a workspace root." >&2
+    local answer=
+    read -r -p "Continue anyway? [y/N] " answer || true
+    case "$answer" in [yY]*) ;; *) echo "Not started." >&2; exit 1 ;; esac
+}
+
+create_session() {
+    local width height claude_size editor shell claude
+    width=$(tput cols 2>/dev/null || echo 160)
+    height=$(tput lines 2>/dev/null || echo 50)
+    claude_size=$((width * 30 / 100))
+    # Give claude a usable 80 cols when nvim still keeps 80+
+    if [ "$width" -ge 160 ] && [ "$claude_size" -lt 80 ]; then claude_size=80; fi
+    if [ "$width" -lt 120 ]; then
+        echo "WARNING: terminal is only ${width} cols wide (recommended: 160+)." >&2
+    fi
+
+    editor=$(tm new-session -d -s "$NAME" -x "$width" -y "$height" -c "$DIR" \
+        -e "NVIM_APPNAME=$NVIM_APP" -e "VSCODE_WS=$DIR" -P -F '#{pane_id}')
+    tm set-option -g @abl_conf "$CONF"
+    # A detached session ignores -x/-y unless the window size is pinned manually
+    tm set-option   -t "=$NAME:" window-size manual
+    tm resize-window -t "=$NAME:" -x "$width" -y "$height"
+    shell=$(tm split-window -v -d -t "$editor" -l 20% -c "$DIR" -P -F '#{pane_id}')
+    claude=$(tm split-window -h -d -t "$editor" -f -l "$claude_size" -c "$DIR" -P -F '#{pane_id}' "${CLAUDE_CMD[@]}")
+    # Typed rather than run directly, so quitting nvim leaves a shell
+    tm send-keys -t "$editor" nvim Enter
+    tm select-pane -t "$editor"
+    tm set-option -w -t "=$NAME:" @editor_pane "$editor"
+    tm set-option -w -t "=$NAME:" @shell_pane "$shell"
+    tm set-option -w -t "=$NAME:" @claude_pane "$claude"
+    # Hand sizing back to the attaching client (same terminal, so panes keep their widths)
+    tm set-option -t "=$NAME:" window-size latest
+    echo "Started session '$NAME' in $DIR."
+}
+
+attach_session() {
+    case "${TMUX:-}" in
+        "") tm attach-session -t "=$NAME" ;;
+        */"$SOCKET",*) tm switch-client -t "=$NAME" ;;
+        *)
+            # Inside another tmux server: nest, its prefix (Ctrl+B) wins over ours
+            echo "Nesting inside another tmux; use Alt+B as prefix here." >&2
+            TMUX='' tm attach-session -t "=$NAME"
+            ;;
+    esac
+}
+
+reload_claude() {
+    local claude
+    claude=$(tm show-options -wqv -t "=$NAME:" @claude_pane)
+    if [ -n "$claude" ] && tm list-panes -s -t "=$NAME" -F '#{pane_id}' | grep -qxF "$claude"; then
+        tm respawn-pane -k -t "$claude" -c "$DIR" "${CLAUDE_CMD[@]}"
+    else
+        claude=$(tm split-window -h -d -f -t "=$NAME:" -l 30% -c "$DIR" -P -F '#{pane_id}' "${CLAUDE_CMD[@]}")
+        tm set-option -w -t "=$NAME:" @claude_pane "$claude"
+    fi
+    echo "Restarted claude in '$NAME'."
+}
+
+# Quit nvim the normal way, so it stops its ABL language server.
+# Fails when nvim stays open (unsaved changes).
+quit_editor() {
+    local editor
+    editor=$(tm show-options -wqv -t "=$NAME:" @editor_pane)
+    is_nvim() { [ "$(tm display-message -p -t "$editor" '#{pane_current_command}' 2>/dev/null)" = nvim ]; }
+    [ -n "$editor" ] && is_nvim || return 0
+    tm send-keys -t "$editor" 'C-\' C-n ':qa' Enter
+    for _ in $(seq 50); do
+        # Give its language server a moment to exit too
+        is_nvim || { sleep 1; return 0; }
+        sleep 0.2
+    done
+    return 1
+}
+
+# Language servers started by this nvim config whose nvim is gone (they hold the
+# project, so new ones don't compile), with their AVMs
+stop_leftover_servers() {
+    local pid parent n=0
+    for pid in $(pgrep -u "$(id -u)" -x java); do
+        tr '\0' '\n' < "/proc/$pid/cmdline" 2>/dev/null | grep -q '/abl-lsda\.jar$' || continue
+        tr '\0' '\n' < "/proc/$pid/environ" 2>/dev/null | grep -qx "NVIM_APPNAME=$NVIM_APP" || continue
+        parent=$(ps -o ppid= -p "$pid") || continue  # exited meanwhile
+        [ "$(ps -o comm= -p $parent)" = nvim ] && continue  # unquoted: ps pads the pid
+        kill $(pgrep -P "$pid") "$pid" 2>/dev/null && n=$((n + 1))
+    done
+    [ "$n" -eq 0 ] || echo "Stopped $n leftover language server(s)."
+}
+
+case "$ACTION" in
+    list)
+        tm list-sessions -F '#{session_name}  #{session_path}#{?session_attached,  [attached],}' 2>/dev/null ||
+            echo "No sessions running."
+        ;;
+    close)
+        if has_session && ! quit_editor; then
+            echo "nvim in '$NAME' didn't quit (unsaved changes?); session left open." >&2
+            exit 1
+        fi
+        stop_leftover_servers
+        # Last: when run from inside the session, this ends the script too
+        if has_session; then
+            echo "Closed '$NAME'."
+            tm kill-session -t "=$NAME"
+        fi
+        ;;
+    kill)
+        has_session || { echo "No session '$NAME'." >&2; exit 1; }
+        tm kill-session -t "=$NAME" && echo "Closed '$NAME'."
+        ;;
+    killall)
+        tm kill-server 2>/dev/null && echo "Closed all sessions." || echo "No sessions running."
+        ;;
+    reload)
+        has_session || { echo "No session '$NAME'." >&2; exit 1; }
+        reload_claude
+        ;;
+    open)
+        check_config
+        has_session || { check_workspace; create_session; }
+        attach_session
+        ;;
+esac
