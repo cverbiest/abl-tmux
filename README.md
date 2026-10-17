@@ -59,6 +59,7 @@ what this setup is and how to check ABL code with the diagnostics.
 | Alt+1 / Alt+2 / Alt+3 (AZERTY: Alt+& / Alt+é / Alt+") | Focus editor / claude / terminal |
 | Ctrl+J | Switch between editor and terminal (passes through in claude) |
 | Alt+Z | Maximize/restore the current pane |
+| Ctrl+Click on a file name (`file`, `file:line`) in the terminal or claude | Open it in nvim (URLs keep working as before) |
 | Mouse | Click to focus, drag borders to resize, wheel to scroll |
 | Ctrl+B | tmux prefix, except in nvim, where it toggles the explorer |
 | Alt+B | tmux prefix everywhere |

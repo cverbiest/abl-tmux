@@ -135,9 +135,12 @@ create_session() {
         echo "WARNING: terminal is only ${width} cols wide (recommended: 160+)." >&2
     fi
 
-    editor=$(tm new-session -d -s "$NAME" -x "$width" -y "$height" -c "$DIR" \
+    # nvim listens here too (init.lua), for Ctrl+click on file names in the other panes
+    local nvim_sock=${XDG_RUNTIME_DIR:-/tmp}/abl-tmux-$(id -u).$SOCKET.$NAME.nvim
+    editor=$(tm new-session -d -s "$NAME" -x "$width" -y "$height" -c "$DIR" -e "ABL_NVIM_SOCKET=$nvim_sock" \
         -e "NVIM_APPNAME=$NVIM_APP" -e "VSCODE_WS=$DIR" -P -F '#{pane_id}')
     tm set-option -g @abl_conf "$CONF"
+    tm set-option -g @abl_open "$SCRIPT_DIR/abl-open.sh"
     # A detached session ignores -x/-y unless the window size is pinned manually
     tm set-option   -t "=$NAME:" window-size manual
     tm resize-window -t "=$NAME:" -x "$width" -y "$height"
@@ -149,6 +152,7 @@ create_session() {
     tm set-option -w -t "=$NAME:" @editor_pane "$editor"
     tm set-option -w -t "=$NAME:" @shell_pane "$shell"
     tm set-option -w -t "=$NAME:" @claude_pane "$claude"
+    tm set-option -w -t "=$NAME:" @nvim_socket "$nvim_sock"
     # Hand sizing back to the attaching client (same terminal, so panes keep their widths)
     tm set-option -t "=$NAME:" window-size latest
     echo "Started session '$NAME' in $DIR."

@@ -87,3 +87,10 @@ has a working VS Code Remote setup (extension under their own `~/.vscode-server`
 - **Fixed:** quitting nvim within ~3 s of starting left the ABL server running (orphan): `vim.lsp.get_clients()`
   doesn't list a client before it has initialized, so VimLeavePre missed it. `abl.lua` now tracks every
   server it starts. Tested: quit after 0.3–8 s, no orphans.
+- **Ctrl+click opens files** (2026-10-17, unreleased): tmux `C-MouseDown1Pane` passes the click on (`send-keys -M`)
+  and, outside the editor pane, runs `tmux/abl-open.sh` with `#{mouse_word}`; it opens existing files in nvim
+  through `$ABL_NVIM_SOCKET` (nvim listens there, `init.lua`). Tested with SGR mouse sequences sent into a nested
+  test client: file:line, quoted path, URL (ignored), missing file, nvim pane (click reaches nvim).
+  Untested: whether the user's terminal still opens URLs itself (it decides before tmux sees the click).
+- Note: `/etc/profile.d/vscode.sh` sources `$VSCODE_WS/APPL.env` and `cd $APPL` in every new shell pane;
+  test workspaces need an `APPL.env` with `APPL=<dir>`, or the shells land in `$HOME`.

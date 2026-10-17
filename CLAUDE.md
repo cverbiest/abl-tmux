@@ -10,6 +10,7 @@ terminal in one tmux window. Goals and steps: `purpose.md`. User-facing docs and
   Entry `init.lua`, modules in `lua/abl/`, plugins (lazy.nvim) in `lua/abl/plugins/`.
   ABL: `lua/abl/abl.lua` (filetype + language server), `ftplugin/abl.lua`, `syntax/abl.lua`.
 - `tmux/tmux.conf`, `tmux/abl-tmux.sh`: separate tmux server (`tmux -L abl`); launcher linked as `~/bin/abl-tmux`.
+  `tmux/abl-open.sh`: Ctrl+click on a file name opens it in nvim (via `$ABL_NVIM_SOCKET`).
 - `install.sh`: per user, creates the links and installs the plugins. `deploy.sh [target]`: copies the
   repo to `/opt/abl-tmux` (or target) for all users. `RELEASE-NOTES.md`: user-visible changes per version.
 - `nvim/cheatsheet.md` (`lua/abl/cheatsheet.lua`): opens when nvim starts without files; most used keys first.

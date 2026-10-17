@@ -4,6 +4,12 @@ Updating: an admin runs `deploy.sh` from the repo (it copies to `/opt/abl-tmux`)
 that plugins changed, every user runs `/opt/abl-tmux/install.sh` again. Restart nvim in running
 sessions, and `abl-tmux -r` to restart claude.
 
+## 0.2.0 (2026-10-17)
+
+- **Ctrl+click on a file name** (`file`, `file:line`, `file:line:col`) in the terminal or claude pane
+  opens it in nvim. URLs and other text behave as before; in nvim, Ctrl+click is still go to
+  definition. Needs a new session (`abl-tmux -c`, then `abl-tmux`).
+
 ## 0.1.0 (2026-10-16)
 
 First release for other users.
