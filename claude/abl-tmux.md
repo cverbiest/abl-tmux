@@ -10,6 +10,9 @@ The tmux session has its own socket (`tmux -L abl`). The pane ids are stored
 in the window options `@editor_pane`, `@claude_pane` and `@shell_pane`.
 `$VSCODE_WS` is the workspace root (the directory with `openedge-project.json`).
 
+Images the user pastes with Ctrl+Alt+V (WezTerm) arrive as paths under
+`~/.cache/wezterm-clip/`; read them as images.
+
 ## Neovim connection and ABL diagnostics
 - Claude is started with `--ide` (and this file as `--append-system-prompt-file`)
   and connects to Neovim through the claudecode.nvim plugin. If the `mcp__ide__*`

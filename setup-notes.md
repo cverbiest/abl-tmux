@@ -63,8 +63,8 @@ has a working VS Code Remote setup (extension under their own `~/.vscode-server`
 - **Tested:** settings of all workspaces in `~/cvb/workspaces` parse; JSONC edge cases; launch from a git
   subdirectory of a scratch workspace (root, `VSCODE_WS` in all panes, compile errors on save);
   restore with a read-only config.
-- **Open:** a shared location. `$HOME` is mode 700, so other users can't use this directory.
-  The protermcap `tmux-256color` entry is needed in every OpenEdge install the users run.
+- **Shared location:** `/opt/abl-tmux`, filled by `deploy.sh` (`$HOME` is mode 700). The protermcap
+  `tmux-256color` entry in each OpenEdge install is the user's concern (CCE's own protermcap).
 - **Server starts with the workspace** (2026-10-16): a `VimEnter` autocmd in `abl.lua` starts the ABL server
   (`vim.lsp.start`, `attach = false`) when nvim's cwd has an `openedge-project.json` up the tree; ABL files
   opened later reuse that client. Tested headless: one client before and after opening a `.p`, compile
@@ -94,3 +94,26 @@ has a working VS Code Remote setup (extension under their own `~/.vscode-server`
   Untested: whether the user's terminal still opens URLs itself (it decides before tmux sees the click).
 - Note: `/etc/profile.d/vscode.sh` sources `$VSCODE_WS/APPL.env` and `cd $APPL` in every new shell pane;
   test workspaces need an `APPL.env` with `APPL=<dir>`, or the shells land in `$HOME`.
+
+## WezTerm (2026-10-17)
+
+The user's terminal is WezTerm on Windows (config: github.com/ccecvb/wezterm-config, CCE fork), servers are
+WezTerm SSH domains from `~/.ssh/config`.
+
+- **Image paste:** branch `clipboard-image-paste` (pushed, not merged): `utils/clip-paste.lua` on Ctrl+Alt+V,
+  adapted from picton.uk's xclip/wl-paste version. PowerShell saves the clipboard image; on an SSH pane
+  ssh/scp (BatchMode) copy it to `~/.cache/wezterm-clip/` on the host and the remote path is pasted.
+  **Works** (2026-10-17, user on Windows): the screenshot arrived in `~/.cache/wezterm-clip/` and claude
+  showed the pasted path as an image attachment (`[Image #1]`).
+- **URLs:** the config's Ctrl+click → OpenLinkAtMouseCursor binding lacks `mouse_reporting = true`, so with
+  tmux mouse on it never fires; Ctrl+Shift+click (Shift = WezTerm's mouse-reporting bypass) should. **Open:**
+  user confirms.
+
+## VS Code tasks (2026-10-17, unreleased)
+
+`nvim/lua/abl/tasks.lua` on Ctrl+Alt+T (tmux forwards it from the other panes) and `:Tasks`. Runs the task
+typed into the terminal pane, as `( cd … && export … && command args )`. JSONC reading moved from `abl.lua`
+to `nvim/lua/abl/vscode.lua`. Tested in a test session with a copy of develop's tasks.json (10 of 11 listed;
+"Lisa debug" left out: echo-only Linux command) and scratch tasks: quoting, cwd/env, `${fileBasename}`,
+`$DLC`, filePicker + pickString inputs (same input asked once), `code -r` opening in nvim, busy terminal
+refused, Ctrl+Alt+T from the terminal pane. Not tried: the real develop tasks (they start Lisa/PASOE).

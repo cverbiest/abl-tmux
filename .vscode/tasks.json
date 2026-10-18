@@ -1,0 +1,52 @@
+{
+    // Sample tasks for the test project: Ctrl+Alt+T in abl-tmux, Terminal > Run Task in VS Code
+    "version": "2.0.0",
+    "inputs": [
+        {
+            // Needs the filePicker extension in VS Code; abl-tmux has it built in
+            "id": "sourcePicker",
+            "type": "command",
+            "command": "filePicker.pick",
+            "args": {
+                "masks": "src/**/*.p",
+                "display": { "type": "fileRelativePath" },
+                "output": "fileRelativePath"
+            }
+        }
+    ],
+    "tasks": [
+        {
+            "label": "Run current file",
+            "detail": "Run the file in the editor with _progres -b (batch, no database)",
+            "type": "shell",
+            // Batch mode only writes MESSAGE output when stdout isn't a terminal, hence | cat
+            "command": "${command:abl.getDlcDirectory}/bin/_progres -b -p '${relativeFile}' | cat",
+            "options": { "cwd": "${workspaceFolder}" },
+            "presentation": { "reveal": "always", "focus": true },
+            "problemMatcher": []
+        },
+        {
+            "label": "List r-code",
+            "detail": "The .r files the language server compiled into tty/, newest first",
+            "type": "shell",
+            "command": "find tty -name '*.r' -printf '%TY-%Tm-%Td %TH:%TM  %p\\n' | sort -r | grep . || echo 'No r-code yet: save an ABL file to compile it'",
+            "options": { "cwd": "${workspaceFolder}" },
+            "problemMatcher": []
+        },
+        {
+            "label": "Show a source file",
+            "detail": "Pick a .p file and print its first lines",
+            "type": "shell",
+            "command": "head",
+            "args": ["-n", "20", "${input:sourcePicker}"],
+            "options": { "cwd": "${workspaceFolder}" },
+            "problemMatcher": []
+        },
+        {
+            "label": "Windows only (not listed in abl-tmux)",
+            "type": "shell",
+            "windows": { "command": "dir src" },
+            "problemMatcher": []
+        }
+    ]
+}

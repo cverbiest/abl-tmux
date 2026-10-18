@@ -4,6 +4,19 @@ Updating: an admin runs `deploy.sh` from the repo (it copies to `/opt/abl-tmux`)
 that plugins changed, every user runs `/opt/abl-tmux/install.sh` again. Restart nvim in running
 sessions, and `abl-tmux -r` to restart claude.
 
+## 0.3.0-beta.1 (2026-10-18)
+
+Beta: VS Code tasks and the ChUI handling may still change (see `PROJECT-PLAN.md`).
+
+- **VS Code tasks:** Ctrl+Alt+T (or `:Tasks`) picks a task from `.vscode/tasks.json` and runs it
+  in the terminal pane, including the `filePicker` inputs. Windows-only tasks aren't listed.
+- **User guide:** `USER-GUIDE.md` with getting started and all features (`:Guide` in nvim).
+- **Terminal title:** `user@host workspace` (e.g. `user@hostname develop`) in the WezTerm
+  tab and window title. Needs a new tmux server (`abl-tmux -K`, then `abl-tmux`).
+- **WezTerm tips** in the user guide: Ctrl+Alt+V pastes a clipboard image as a file path (needs the
+  `clipboard-image-paste` branch of the CCE WezTerm config); Ctrl+Shift+click opens URLs.
+- claude knows where pasted images arrive (`claude/abl-tmux.md`).
+
 ## 0.2.0 (2026-10-17)
 
 - **Ctrl+click on a file name** (`file`, `file:line`, `file:line:col`) in the terminal or claude pane

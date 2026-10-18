@@ -29,70 +29,7 @@ if not ext then
     return
 end
 
--- VS Code settings files are JSON with comments and trailing commas.
--- vim.json.decode skips the comments; drop the trailing commas first.
-local function decode_jsonc(s)
-    -- Index of the next token after whitespace and comments
-    local function next_token(i)
-        while true do
-            i = s:match("^%s*()", i)
-            if s:sub(i, i + 1) == "//" then
-                i = (s:find("\n", i, true) or #s) + 1
-            elseif s:sub(i, i + 1) == "/*" then
-                i = (select(2, s:find("*/", i + 2, true)) or #s) + 1
-            else
-                return i
-            end
-        end
-    end
-    local parts, start, i = {}, 1, 1
-    while true do
-        local j = s:find('[",/]', i)
-        if not j then break end
-        local c = s:sub(j, j)
-        if c == '"' then
-            local k = j + 1
-            repeat
-                k = s:find('[\\"]', k)
-                local escape = k and s:sub(k, k) == "\\"
-                if escape then k = k + 2 end
-            until not escape
-            i = (k or #s) + 1
-        elseif c == "/" then
-            local pair = s:sub(j, j + 1)
-            i = (pair == "//" or pair == "/*") and next_token(j) or j + 1
-        else
-            if s:sub(next_token(j + 1)):match("^[%]}]") then
-                parts[#parts + 1] = s:sub(start, j - 1)
-                start = j + 1
-            end
-            i = j + 1
-        end
-    end
-    parts[#parts + 1] = s:sub(start)
-    return vim.json.decode(table.concat(parts), { skip_comments = true })
-end
-
-local function read_settings(path)
-    local f = io.open(path)
-    if not f then return {} end
-    local text = f:read("*a")
-    f:close()
-    local ok, data = pcall(decode_jsonc, text)
-    if not ok or type(data) ~= "table" then
-        vim.notify("ABL: can't read " .. path .. ": " .. tostring(data), vim.log.levels.WARN)
-        return {}
-    end
-    return data
-end
-
--- The workspace's .code-workspace: the only one in root, or the one named after it
-local function workspace_file(root)
-    local files = vim.fn.glob(root .. "/*.code-workspace", false, true)
-    if #files <= 1 then return files[1] end
-    local own = root .. "/" .. vim.fs.basename(root) .. ".code-workspace"
-    return vim.uv.fs_stat(own) and own or nil
-end
+local vscode = require("abl.vscode")
 
 -- "abl.*" settings as VS Code resolves them, later files winning: remote machine
 -- settings, the .code-workspace "settings", the folder's .vscode/settings.json.
@@ -105,12 +42,12 @@ local function abl_settings(root)
         end
     end
     for _, path in ipairs(vim.fn.glob(vim.env.HOME .. "/.vscode*/data/Machine/settings.json", false, true)) do
-        add(read_settings(path))
+        add(vscode.read(path))
     end
     if root then
-        local ws = workspace_file(root)
-        if ws then add(read_settings(ws).settings) end
-        add(read_settings(root .. "/.vscode/settings.json"))
+        local ws = vscode.workspace_file(root)
+        if ws then add(vscode.read(ws).settings) end
+        add(vscode.read(root .. "/.vscode/settings.json"))
     end
 
     local function expand(value)

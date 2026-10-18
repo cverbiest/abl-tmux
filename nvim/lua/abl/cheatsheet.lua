@@ -10,6 +10,12 @@ local function open()
 end
 
 vim.api.nvim_create_user_command("Cheatsheet", open, { desc = "Show the abl-tmux cheat sheet" })
+-- The full user guide, next to nvim/ in the abl-tmux folder (the config dir is a link to nvim/)
+vim.api.nvim_create_user_command("Guide", function()
+    vim.cmd.edit(vim.fn.fnameescape(vim.fs.dirname(vim.fn.resolve(vim.fn.stdpath("config"))) .. "/USER-GUIDE.md"))
+    vim.bo.modifiable = false
+    vim.bo.readonly = true
+end, { desc = "Show the abl-tmux user guide" })
 vim.keymap.set("n", "<leader>?", open, { desc = "Cheat sheet" })
 
 vim.api.nvim_create_autocmd("VimEnter", {

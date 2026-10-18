@@ -141,6 +141,7 @@ create_session() {
         -e "NVIM_APPNAME=$NVIM_APP" -e "VSCODE_WS=$DIR" -P -F '#{pane_id}')
     tm set-option -g @abl_conf "$CONF"
     tm set-option -g @abl_open "$SCRIPT_DIR/abl-open.sh"
+    tm set-option -g @abl_user "$(id -un)"
     # A detached session ignores -x/-y unless the window size is pinned manually
     tm set-option   -t "=$NAME:" window-size manual
     tm resize-window -t "=$NAME:" -x "$width" -y "$height"

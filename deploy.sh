@@ -10,7 +10,7 @@ set -euo pipefail
 
 HERE=$(dirname "$(readlink -f "$0")")
 TARGET=$(readlink -m "${1:-/opt/abl-tmux}")
-FILES=(install.sh README.md RELEASE-NOTES.md nvim tmux claude)
+FILES=(install.sh README.md USER-GUIDE.md RELEASE-NOTES.md nvim tmux claude)
 
 # Only write into a new or empty directory, or an earlier copy
 if [ -d "$TARGET" ] && [ -n "$(ls -A "$TARGET")" ] &&

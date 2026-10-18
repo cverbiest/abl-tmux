@@ -29,6 +29,7 @@
   F2                        rename symbol
   Ctrl+Space, Tab/Enter     completion: open, accept
   Shift+Alt+F               format document
+  Ctrl+Alt+T                run a VS Code task (tasks.json) in the terminal
 
 ## Problems
   F8 / Shift+F8             next / previous problem
@@ -42,6 +43,7 @@
   Alt+B d                   detach; abl-tmux reattaches later
 
 ## More
+  :Guide                    the full user guide (getting started, all features)
   F1  or  Ctrl+Shift+P      command palette
   Space (wait)              all Space keys · Space f k lists every key
   /ide  (in claude)         reconnect claude to nvim
