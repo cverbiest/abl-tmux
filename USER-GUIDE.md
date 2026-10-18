@@ -25,6 +25,11 @@ This links `~/bin/abl-tmux` and installs the editor plugins for you. It doesn't 
 or tmux setup. You need Claude Code. VS Code with the vscode-abl extension is optional: abl-tmux uses
 its language server when it's installed and up to date, and otherwise the copy that comes with abl-tmux. Use a terminal of at least 160 columns; WezTerm works well.
 
+Not at CCE? Install with `install.sh --no-cce`: abl-tmux then leaves out the CCE features (the
+`APPL.env` check and the CreateWorkspace offer). `install.sh --cce` turns them on again; a plain
+`install.sh` keeps your choice, and `abl-tmux -V` shows it. `ABL_TMUX_CCE=0` or `1` overrides it for
+one start.
+
 ### Open a workspace
 
 ```
@@ -84,11 +89,19 @@ itself. To leave everything running and come back later: **Alt+B d** (detach), t
 | `abl-tmux -k [dir]` | Close the session without quitting the editor first |
 | `abl-tmux -K` | Close all sessions |
 | `abl-tmux -r [dir]` | Restart claude |
-| `abl-tmux -V` | Show the installed version, and which tmux and nvim it uses |
+| `abl-tmux -V` | Show the installed version, which tmux and nvim it uses, and whether CCE features are on |
 
 - **Workspace root:** the nearest folder up from `dir` with an `openedge-project.json`, so you can start
-  from any git project inside it. When the root has no `openedge-project.json` or `APPL.env`, abl-tmux
-  asks before opening it.
+  from any git project inside it. When the root has no `openedge-project.json`, abl-tmux asks before
+  opening it.
+- **CCE workspaces** (with CCE features on): a root with an `APPL.env`, a `cce-workspace.json` or
+  `oe*/config/CreateWorkspace*.ps1` is a CCE workspace and also needs `APPL.env`. Other workspaces,
+  such as external projects, only need the `openedge-project.json`.
+- **New CCE workspace without `APPL.env`:** when the root has `oe*/config/CreateWorkspace_tui.ps1`,
+  abl-tmux offers to run it (forms) or `CreateWorkspace_linux.ps1` (questions in the terminal)
+  first; these write `APPL.env`. You can also open the workspace without it, or stop.
+- **Questions** at startup are fzf lists: arrow keys and Enter pick, Esc stops. Without fzf you type
+  the letter shown.
 - **`$VSCODE_WS`** is set to the root in every pane; the CCE shell setup then loads the workspace's
   `APPL.env` and changes to `$APPL`, as in VS Code's terminal.
 - **One session per workspace,** named `abl-<folder>`; the terminal title shows `user@host workspace`.

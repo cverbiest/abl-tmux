@@ -3,9 +3,29 @@
 #   ~/.config/nvim-abl -> nvim/        (used via NVIM_APPNAME=nvim-abl)
 #   ~/bin/abl-tmux     -> tmux/abl-tmux.sh
 # Existing files that aren't these links are left alone.
+#
+# Usage: install.sh [--cce | --no-cce]
+#   --no-cce : turn off the CCE features (APPL.env checks, CreateWorkspace offer)
+#   --cce    : turn them on again (the default)
+# The choice is kept in ~/.config/abl-tmux/config; without an option it stays as it was.
 set -euo pipefail
 
 HERE=$(dirname "$(readlink -f "$0")")
+CONFIG_FILE=${XDG_CONFIG_HOME:-$HOME/.config}/abl-tmux/config
+
+cce=
+case "${1:-}" in
+    --cce) cce=1 ;;
+    --no-cce) cce=0 ;;
+    "") ;;
+    -h|--help) awk 'NR == 1 { next } /^#/ { sub(/^# ?/, ""); print; next } { exit }' "$0"; exit 0 ;;
+    *) echo "Unknown option: $1 (use --cce or --no-cce)" >&2; exit 2 ;;
+esac
+if [ -n "$cce" ]; then
+    mkdir -p "$(dirname "$CONFIG_FILE")"
+    { grep -v '^cce=' "$CONFIG_FILE" 2>/dev/null || true; echo "cce=$cce"; } > "$CONFIG_FILE.new"
+    mv "$CONFIG_FILE.new" "$CONFIG_FILE"
+fi
 
 link() {
     local target=$1 link=$2
@@ -35,5 +55,10 @@ case ":$PATH:" in *":$HOME/bin:"*) ;; *) echo "Note: ~/bin is not on your PATH."
 if [ -f "$HERE/VERSION" ]; then
     state=${XDG_STATE_HOME:-$HOME/.local/state}/abl-tmux
     mkdir -p "$state" && cp "$HERE/VERSION" "$state/installed-version"
+fi
+if [ "$(sed -n 's/^cce=//p' "$CONFIG_FILE" 2>/dev/null | tail -1)" = 0 ]; then
+    echo "CCE features: off (install.sh --cce turns them on)"
+else
+    echo "CCE features: on (install.sh --no-cce turns them off)"
 fi
 echo "Done. Start with: abl-tmux [workspace dir]"

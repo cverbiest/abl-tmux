@@ -13,6 +13,12 @@ sessions, and `abl-tmux -r` to restart claude.
 - Ctrl+P no longer follows `.gitignore`: it finds gitignored sources and leaves out only build output
   (`.builder/`, r-code, `buildDirectory` except its `_buildinfo/`) and `.git/`. Hidden files like
   `.vscode/` are found too. Own rules in `.vscode/abl-tmux.ignore` (user guide, Advanced).
+- A workspace without `APPL.env` but with `oe*/config/CreateWorkspace_tui.ps1`: abl-tmux offers to run
+  it, or `CreateWorkspace_linux.ps1`, before opening.
+- **Not only for CCE:** `APPL.env` is only expected in CCE workspaces (with an `APPL.env`,
+  `cce-workspace.json` or `oe*/config/CreateWorkspace*.ps1`); external projects just need an
+  `openedge-project.json`. `install.sh --no-cce` turns the CCE features off, `--cce` on again.
+- The launcher's questions are fzf lists (Enter picks, Esc stops), as in `abl-tmux --connect`.
 
 ## 0.3.0-beta.3 (2026-10-18)
 
