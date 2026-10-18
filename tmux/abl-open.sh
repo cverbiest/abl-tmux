@@ -7,7 +7,7 @@
 set -uo pipefail
 
 word=$1 dir=$2 sock=$3 editor=$4 tmux_sock=$5
-tm() { tmux -S "$tmux_sock" "$@"; }
+tm() { "${ABL_TMUX_BIN:-tmux}" -S "$tmux_sock" "$@"; }
 
 # Strip what often surrounds a path in output: quotes, brackets, trailing punctuation
 word=${word#[\"\'\(\[\<\`]}
@@ -34,7 +34,7 @@ fi
 f=${file//\'/\'\'}
 expr="execute('drop ' .. fnameescape('$f'))"
 [ -n "$line" ] && expr="$expr .. execute('$line')"
-if ! nvim --server "$sock" --remote-expr "$expr" >/dev/null 2>&1; then
+if ! "${ABL_NVIM_BIN:-nvim}" --server "$sock" --remote-expr "$expr" >/dev/null 2>&1; then
     tm display-message "abl-open: couldn't open $file in nvim"
     exit 0
 fi

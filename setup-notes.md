@@ -117,3 +117,17 @@ to `nvim/lua/abl/vscode.lua`. Tested in a test session with a copy of develop's 
 "Lisa debug" left out: echo-only Linux command) and scratch tasks: quoting, cwd/env, `${fileBasename}`,
 `$DLC`, filePicker + pickString inputs (same input asked once), `code -r` opening in nvim, busy terminal
 refused, Ctrl+Alt+T from the terminal pane. Not tried: the real develop tasks (they start Lisa/PASOE).
+
+## Bundled tmux and Neovim (2026-10-18, unreleased)
+
+`fetch-tools.sh` → `tools/bin/tmux` (tmux/tmux-builds 3.7c, static) and `tools/bin/nvim` (AppImage 0.12.6;
+FUSE is available, glibc 2.34 is enough, no LD_LIBRARY_PATH leaks to children). Launcher prefers them,
+exports `ABL_TMUX_BIN`/`ABL_NVIM_BIN` and puts `tools/bin` first in PATH (survives the login scripts and
+APPL.env in the panes), starts the editor with the full nvim path; tmux.conf run-shell uses `@abl_tmux`.
+- A 3.7c client works with a 3.2a server; a 3.2a client against a 3.7c server fails ("server exited
+  unexpectedly", the server survives). Hence the same binary everywhere inside a session.
+- tmux 3.7 has a different default `word-separators` (splits on / . :), which broke Ctrl+click
+  (`mouse_word` = "src"); tmux.conf now sets it explicitly.
+- Tested (test session, bundled): versions, PATH in panes, title, Alt+1/2/3, Ctrl+J, Alt+Z, Ctrl+click,
+  Ctrl+Alt+T task, compile on save, `abl-tmux -c`. Native fallback (`ABL_TMUX_NATIVE=1`): server 3.2a,
+  snap nvim, keys, Ctrl+click.

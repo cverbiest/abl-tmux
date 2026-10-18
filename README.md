@@ -10,10 +10,13 @@ window. It opens existing VS Code ABL workspaces as they are and reuses the vsco
 
 ## Installing and updating (admin)
 
-This is a git repo. `./deploy.sh [target]` copies what users need to `/opt/abl-tmux` (or `target`) and
+This is a git repo. `./fetch-tools.sh` downloads the latest stable tmux (static build from
+github.com/tmux/tmux-builds) and Neovim (AppImage) into `tools/bin` (not in git); the launcher and
+`install.sh` use them instead of the native packages (unless `ABL_TMUX_NATIVE=1`). Run it again to
+update them, then deploy. `./deploy.sh [target]` copies what users need to `/opt/abl-tmux` (or `target`) and
 writes the version (`git describe`) to `VERSION`; run it again to update, with sudo when the target
-isn't writable for you. It only writes into a new directory or an earlier copy, and says when the
-plugins changed.
+isn't writable for you. It only writes into a new directory or an earlier copy, copies `tools/` when
+present, and says when the plugins changed.
 
 Each user runs `/opt/abl-tmux/install.sh` once. After a deploy, `abl-tmux` shows users what's new
 (from `RELEASE-NOTES.md`) and offers to rerun `install.sh`; it compares the deployed `VERSION` with
@@ -33,4 +36,5 @@ when they can't write the shared copy, lazy keeps their lockfile there too.
 | `nvim/cheatsheet.md` | Cheat sheet, shown when nvim starts without a file |
 | `claude/abl-tmux.md` | Extra instructions for claude in the session |
 | `install.sh`, `deploy.sh` | Per-user setup; copy to `/opt/abl-tmux` |
+| `fetch-tools.sh`, `tools/bin/` | Download recent tmux and nvim; the downloads (not in git) |
 | `openedge-project.json`, `src/`, `dump/`, `.vscode/` | Local test project (`.vscode/tasks.json` has sample tasks); only `.vscode/` is in git |

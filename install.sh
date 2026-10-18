@@ -26,7 +26,10 @@ link "$HERE/tmux/abl-tmux.sh" "$HOME/bin/abl-tmux"
 
 echo
 echo "Installing nvim plugins (versions from lazy-lock.json)..."
-NVIM_APPNAME=nvim-abl nvim --headless "+Lazy! restore" +qa
+# The nvim abl-tmux uses: tools/bin (fetch-tools.sh) unless ABL_TMUX_NATIVE=1
+NVIM=nvim
+if [ -z "${ABL_TMUX_NATIVE:-}" ] && [ -x "$HERE/tools/bin/nvim" ]; then NVIM=$HERE/tools/bin/nvim; fi
+NVIM_APPNAME=nvim-abl "$NVIM" --headless "+Lazy! restore" +qa
 case ":$PATH:" in *":$HOME/bin:"*) ;; *) echo "Note: ~/bin is not on your PATH." >&2 ;; esac
 # abl-tmux compares this with the deployed VERSION and offers to rerun install.sh
 if [ -f "$HERE/VERSION" ]; then

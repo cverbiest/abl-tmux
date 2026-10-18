@@ -4,6 +4,12 @@ Updating: an admin runs `deploy.sh` from the repo (it copies to `/opt/abl-tmux`)
 that plugins changed, every user runs `/opt/abl-tmux/install.sh` again. Restart nvim in running
 sessions, and `abl-tmux -r` to restart claude.
 
+## 0.3.0-beta.3 (2026-10-18)
+
+- **Recent tmux and Neovim:** abl-tmux brings tmux 3.7c (was 3.2a on RHEL 9) and Neovim 0.12.6 along
+  and uses them; `ABL_TMUX_NATIVE=1` uses the server's packages. Close running sessions
+  (`abl-tmux -c` in each workspace, then `abl-tmux -K`) before the first start with the new tmux.
+
 ## 0.3.0-beta.2 (2026-10-18)
 
 - **Update notice:** after a deploy, `abl-tmux` shows what's new and offers to run `install.sh`, and

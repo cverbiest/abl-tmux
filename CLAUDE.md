@@ -12,6 +12,9 @@ Progress and test results: `setup-notes.md`; read it first when resuming ("do ne
   ABL: `lua/abl/abl.lua` (filetype + language server), `ftplugin/abl.lua`, `syntax/abl.lua`.
 - `tmux/tmux.conf`, `tmux/abl-tmux.sh`: separate tmux server (`tmux -L abl`); launcher linked as `~/bin/abl-tmux`.
   `tmux/abl-open.sh`: Ctrl+click on a file name opens it in nvim (via `$ABL_NVIM_SOCKET`).
+- `fetch-tools.sh`: downloads the latest tmux (tmux/tmux-builds, static) and nvim (AppImage) into `tools/bin`
+  (not in git; deploy.sh copies it). The launcher and install.sh prefer them over the native packages
+  (`ABL_TMUX_NATIVE=1`: native) and export `ABL_TMUX_BIN`/`ABL_NVIM_BIN`; tmux.conf uses `@abl_tmux`.
 - `install.sh`: per user, creates the links and installs the plugins. `deploy.sh [target]`: copies the
   repo to `/opt/abl-tmux` (or target) for all users. `RELEASE-NOTES.md`: user-visible changes per version.
 - `nvim/cheatsheet.md` (`lua/abl/cheatsheet.lua`): opens when nvim starts without files; most used keys first.
@@ -33,6 +36,10 @@ Progress and test results: `setup-notes.md`; read it first when resuming ("do ne
 
 - Test headless: `NVIM_APPNAME=nvim-abl nvim --headless -c "luafile <script>"`, or drive a real nvim in a
   separate tmux server (`tmux -L claudetest`) and read it with `capture-pane`. Kill that server afterwards.
+- A session the launcher starts (e.g. `ABL_TMUX_SOCKET=claudetest2 tmux/abl-tmux.sh` inside an outer test
+  tmux) runs on `tools/bin/tmux` (3.7c): talk to it with that binary, the native 3.2a client gets "server
+  exited unexpectedly". Simulate keys and clicks by sending the raw bytes to the outer pane
+  (`send-keys -l $'\e1'`, SGR mouse `$'\e[<16;x;yM'`); plain `send-keys` to the inner pane skips bindings.
 - **Never start nvim-abl in a real workspace (this directory, `~/workspaces/*`), not even headless for a
   non-ABL test:** nvim starts the ABL server as soon as its cwd has an `openedge-project.json`. Use a copy
   of the project under the scratchpad, or a directory without one.
@@ -54,6 +61,7 @@ Progress and test results: `setup-notes.md`; read it first when resuming ("do ne
 
 ## Environment
 
+- tmux/nvim: bundled `tools/bin` (3.7c / 0.12.6) or native (`/usr/bin/tmux` 3.2a, snap nvim 0.12.5).
 - OpenEdge: `/usr/oe128` (12.8, = `/usr/oe12811`), `/usr/oe122`; `DLC=/usr/dlc`. Runtimes are listed in `abl.lua`.
 - ABL language server: `~/.vscode-server/extensions/riversidesoftware.openedge-abl-lsp-*` (unlicensed).
 - tree-sitter-abl: `~/projects/tree-sitter-abl` (no highlight queries; parses too little real code to use yet).

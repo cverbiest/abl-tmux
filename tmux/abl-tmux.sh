@@ -27,7 +27,10 @@
 #   -k, --kill      : close the session for DIR without quitting nvim first
 #   -K, --kill-all  : close all sessions (stops the abl tmux server)
 #   -r, --reload    : restart claude in the session for DIR
-#   -V, --version   : show the installed version
+#   -V, --version   : show the installed version and the tmux/nvim it uses
+#
+# Uses the tmux and nvim in tools/bin (fetch-tools.sh) when present; ABL_TMUX_NATIVE=1 uses
+# the native packages instead.
 #   -h, --help      : show this help
 set -euo pipefail
 
@@ -37,7 +40,17 @@ SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 CONF="$SCRIPT_DIR/tmux.conf"
 SOCKET=${ABL_TMUX_SOCKET:-abl}  # override to test without touching running sessions
 NVIM_APP=nvim-abl
-tm() { tmux -L "$SOCKET" -f "$CONF" "$@"; }
+# tmux and nvim: the bundled ones (fetch-tools.sh, tools/bin) unless ABL_TMUX_NATIVE=1 or
+# they're missing. The tmux server inherits these, so everything in the session uses the same
+# ones: an older tmux client can't talk to a newer server.
+TOOLS=$(readlink -f "$SCRIPT_DIR/../tools/bin" 2>/dev/null || true)
+if [ -z "${ABL_TMUX_NATIVE:-}" ] && [ -x "$TOOLS/tmux" ] && [ -x "$TOOLS/nvim" ]; then
+    export PATH="$TOOLS:$PATH"
+fi
+ABL_TMUX_BIN=$(command -v tmux) || { echo "tmux not found" >&2; exit 1; }
+ABL_NVIM_BIN=$(command -v nvim) || { echo "nvim not found" >&2; exit 1; }
+export ABL_TMUX_BIN ABL_NVIM_BIN
+tm() { "$ABL_TMUX_BIN" -L "$SOCKET" -f "$CONF" "$@"; }
 # claude connects to nvim by itself (--ide) and learns about this setup from claude/abl-tmux.md
 CLAUDE_CMD=(claude --ide)
 CLAUDE_MD=$(readlink -f "$SCRIPT_DIR/../claude/abl-tmux.md" || true)
@@ -51,7 +64,10 @@ case "${1:-}" in
     -k|--kill)     ACTION=kill;   shift ;;
     -K|--kill-all) ACTION=killall; shift ;;
     -r|--reload)   ACTION=reload; shift ;;
-    -V|--version)  cat "$SCRIPT_DIR/../VERSION" 2>/dev/null || echo "development copy (no VERSION)"; exit 0 ;;
+    -V|--version)
+        cat "$SCRIPT_DIR/../VERSION" 2>/dev/null || echo "development copy (no VERSION)"
+        echo "$("$ABL_TMUX_BIN" -V) ($ABL_TMUX_BIN), $("$ABL_NVIM_BIN" --version | head -1) ($ABL_NVIM_BIN)"
+        exit 0 ;;
     -h|--help)     usage; exit 0 ;;
     -*)            echo "Unknown option: $1" >&2; usage >&2; exit 2 ;;
 esac
@@ -179,6 +195,7 @@ create_session() {
     tm set-option -g @abl_conf "$CONF"
     tm set-option -g @abl_open "$SCRIPT_DIR/abl-open.sh"
     tm set-option -g @abl_user "$(id -un)"
+    tm set-option -g @abl_tmux "$ABL_TMUX_BIN"
     # The version this tmux server runs, for check_version (only the first session sets it)
     [ -n "$(tm show-options -gqv @abl_version)" ] ||
         tm set-option -g @abl_version "$(cat "$SCRIPT_DIR/../VERSION" 2>/dev/null || echo dev)"
@@ -188,7 +205,7 @@ create_session() {
     shell=$(tm split-window -v -d -t "$editor" -l 20% -c "$DIR" -P -F '#{pane_id}')
     claude=$(tm split-window -h -d -t "$editor" -f -l "$claude_size" -c "$DIR" -P -F '#{pane_id}' "${CLAUDE_CMD[@]}")
     # Typed rather than run directly, so quitting nvim leaves a shell
-    tm send-keys -t "$editor" nvim Enter
+    tm send-keys -t "$editor" "$(printf '%q' "$ABL_NVIM_BIN")" Enter
     tm select-pane -t "$editor"
     tm set-option -w -t "=$NAME:" @editor_pane "$editor"
     tm set-option -w -t "=$NAME:" @shell_pane "$shell"

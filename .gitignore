@@ -1,3 +1,6 @@
+# Downloaded tmux and nvim (fetch-tools.sh)
+/tools/
+
 # Local ABL test project (see CLAUDE.md) and what the language server builds from it
 /openedge-project.json
 /src/

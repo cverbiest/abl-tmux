@@ -7,6 +7,8 @@
 local vscode = require("abl.vscode")
 
 local M = {}
+-- The tmux of this session (abl-tmux may use its own, newer one)
+local TMUX = vim.env.ABL_TMUX_BIN or "tmux"
 local last_label -- the last task run is listed first
 
 local function root()
@@ -146,7 +148,7 @@ end
 -- The pane's shell pid and its terminal's foreground process group. The shell is idle
 -- when it is in the foreground itself (a task runs in a subshell, also named bash).
 local function foreground(pane)
-    local pid = tonumber(vim.trim(vim.fn.system({ "tmux", "display-message", "-p", "-t", pane, "#{pane_pid}" })))
+    local pid = tonumber(vim.trim(vim.fn.system({ TMUX, "display-message", "-p", "-t", pane, "#{pane_pid}" })))
     local f = pid and io.open("/proc/" .. pid .. "/stat")
     if not f then return nil end
     local stat = f:read("*l")
@@ -157,11 +159,11 @@ end
 
 -- The terminal pane (abl-tmux's @shell_pane) if it is idle at a shell prompt
 local function shell_pane()
-    local pane = vim.trim(vim.fn.system({ "tmux", "display-message", "-p", "#{@shell_pane}" }))
+    local pane = vim.trim(vim.fn.system({ TMUX, "display-message", "-p", "#{@shell_pane}" }))
     if vim.v.shell_error ~= 0 or pane == "" then return nil, "no terminal pane" end
     local pid, fg = foreground(pane)
     if pid and fg ~= pid then
-        local cmd = vim.trim(vim.fn.system({ "tmux", "display-message", "-p", "-t", pane, "#{pane_current_command}" }))
+        local cmd = vim.trim(vim.fn.system({ TMUX, "display-message", "-p", "-t", pane, "#{pane_current_command}" }))
         return nil, "the terminal is busy (" .. cmd .. "); stop it with Ctrl+C or wait"
     end
     return pane
@@ -176,10 +178,10 @@ end
 
 local function zoom_for_chui(pane)
     local function get(fmt)
-        return vim.trim(vim.fn.system({ "tmux", "display-message", "-p", "-t", pane, fmt }))
+        return vim.trim(vim.fn.system({ TMUX, "display-message", "-p", "-t", pane, fmt }))
     end
     if tonumber(get("#{pane_width}")) >= 80 and tonumber(get("#{pane_height}")) >= 25 then return end
-    if get("#{window_zoomed_flag}") ~= "1" then vim.fn.system({ "tmux", "resize-pane", "-Z", "-t", pane }) end
+    if get("#{window_zoomed_flag}") ~= "1" then vim.fn.system({ TMUX, "resize-pane", "-Z", "-t", pane }) end
     if tonumber(get("#{window_width}")) < 80 or tonumber(get("#{window_height}")) < 25 then
         vim.notify("The terminal is smaller than 80x25, too small for OpenEdge character UI", vim.log.levels.WARN)
     end
@@ -251,14 +253,14 @@ local function run(task, inputs, dir, file)
     local pane, why = shell_pane()
     if not pane then return vim.notify("Task " .. task.label .. ": " .. why, vim.log.levels.WARN) end
     if wants_screen(task, line) then
-        vim.fn.system({ "tmux", "select-pane", "-t", pane })
+        vim.fn.system({ TMUX, "select-pane", "-t", pane })
         zoom_for_chui(pane)
     end
-    vim.fn.system({ "tmux", "send-keys", "-t", pane, "C-e", "C-u" })
-    vim.fn.system({ "tmux", "send-keys", "-t", pane, "-l", line })
-    vim.fn.system({ "tmux", "send-keys", "-t", pane, "Enter" })
+    vim.fn.system({ TMUX, "send-keys", "-t", pane, "C-e", "C-u" })
+    vim.fn.system({ TMUX, "send-keys", "-t", pane, "-l", line })
+    vim.fn.system({ TMUX, "send-keys", "-t", pane, "Enter" })
     watch_for_chui(pane)
-    if (task.presentation or {}).focus then vim.fn.system({ "tmux", "select-pane", "-t", pane }) end
+    if (task.presentation or {}).focus then vim.fn.system({ TMUX, "select-pane", "-t", pane }) end
 end
 
 function M.pick()

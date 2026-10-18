@@ -4,6 +4,8 @@
 # TARGET/VERSION. Each user then runs TARGET/install.sh once, and again after an
 # update that changes the plugins (deploy.sh says so).
 #
+# Also copies tools/ (tmux and nvim from fetch-tools.sh) when present.
+#
 # Usage: deploy.sh [TARGET]
 # Use sudo when TARGET isn't writable for you.
 set -euo pipefail
@@ -11,6 +13,12 @@ set -euo pipefail
 HERE=$(dirname "$(readlink -f "$0")")
 TARGET=$(readlink -m "${1:-/opt/abl-tmux}")
 FILES=(install.sh README.md USER-GUIDE.md RELEASE-NOTES.md nvim tmux claude)
+# tmux and nvim downloaded by fetch-tools.sh; without them users get the native packages
+if [ -x "$HERE/tools/bin/tmux" ] && [ -x "$HERE/tools/bin/nvim" ]; then
+    FILES+=(tools)
+else
+    echo "Note: no tools/bin (run ./fetch-tools.sh); users will use the native tmux and nvim." >&2
+fi
 
 # Only write into a new or empty directory, or an earlier copy
 if [ -d "$TARGET" ] && [ -n "$(ls -A "$TARGET")" ] &&

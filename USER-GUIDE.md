@@ -84,7 +84,7 @@ itself. To leave everything running and come back later: **Alt+B d** (detach), t
 | `abl-tmux -k [dir]` | Close the session without quitting the editor first |
 | `abl-tmux -K` | Close all sessions |
 | `abl-tmux -r [dir]` | Restart claude |
-| `abl-tmux -V` | Show the installed version |
+| `abl-tmux -V` | Show the installed version, and which tmux and nvim it uses |
 
 - **Workspace root:** the nearest folder up from `dir` with an `openedge-project.json`, so you can start
   from any git project inside it. When the root has no `openedge-project.json` or `APPL.env`, abl-tmux
@@ -93,6 +93,9 @@ itself. To leave everything running and come back later: **Alt+B d** (detach), t
   `APPL.env` and changes to `$APPL`, as in VS Code's terminal.
 - **One session per workspace,** named `abl-<folder>`; the terminal title shows `user@host workspace`.
 - Start abl-tmux from a plain terminal, not from inside another tmux.
+- **tmux and nvim versions:** abl-tmux brings recent tmux and Neovim builds along and uses those
+  (`abl-tmux -V` shows them); inside a session, `tmux` and `nvim` in the terminal are those versions
+  too. `ABL_TMUX_NATIVE=1 abl-tmux …` uses the server's own packages instead.
 
 ### Panes (tmux)
 
