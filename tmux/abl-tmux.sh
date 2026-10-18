@@ -111,6 +111,43 @@ check_config() {
     fi
 }
 
+# After a deploy (VERSION differs from what install.sh recorded): show what's new and offer
+# to rerun install.sh; and say when running sessions still use an older version.
+# A development copy has no VERSION and is never checked.
+check_version() {
+    local current installed server notes answer=
+    current=$(cat "$SCRIPT_DIR/../VERSION" 2>/dev/null) || return 0
+    installed=$(cat "${XDG_STATE_HOME:-$HOME/.local/state}/abl-tmux/installed-version" 2>/dev/null || true)
+    if [ "$current" != "$installed" ]; then
+        notes="$SCRIPT_DIR/../RELEASE-NOTES.md"
+        echo "abl-tmux was updated to $current (installed: ${installed:-unknown}). What's new:" >&2
+        # Release-note sections newer than the installed version (only the newest when unknown)
+        awk -v old="$(plain_version "$installed")" '
+            /^## / { if (seen && (old == "" || $2 == old)) exit; seen = 1 }
+            seen' "$notes" 2>/dev/null | sed 's/^/  /' >&2
+        if [ -t 0 ]; then
+            read -r -p "Run install.sh now (plugins and links)? [Y/n] " answer || true
+            case "$answer" in
+                [nN]*) echo "Skipped; run $(readlink -f "$SCRIPT_DIR/..")/install.sh later." >&2 ;;
+                *) "$SCRIPT_DIR/../install.sh" || echo "install.sh failed; continuing." >&2 ;;
+            esac
+        fi
+    fi
+    # Servers started before versions were recorded have none: older too
+    tm list-sessions >/dev/null 2>&1 || return 0
+    server=$(tm show-options -gqv @abl_version 2>/dev/null || true)
+    if [ "$server" != "$current" ]; then
+        echo "Running sessions were started with ${server:-an older} abl-tmux. To use $current, close them" \
+            "(abl-tmux -c in each workspace), then abl-tmux -K." >&2
+    fi
+}
+
+# v0.3.0-beta.1-2-gabc123 (git describe) -> 0.3.0-beta.1, as in RELEASE-NOTES.md
+plain_version() {
+    local v=${1#v}
+    echo "${v%%-[0-9]*-g*}"
+}
+
 # A workspace root has these; ask before opening a directory without them
 check_workspace() {
     local f missing=()
@@ -142,6 +179,9 @@ create_session() {
     tm set-option -g @abl_conf "$CONF"
     tm set-option -g @abl_open "$SCRIPT_DIR/abl-open.sh"
     tm set-option -g @abl_user "$(id -un)"
+    # The version this tmux server runs, for check_version (only the first session sets it)
+    [ -n "$(tm show-options -gqv @abl_version)" ] ||
+        tm set-option -g @abl_version "$(cat "$SCRIPT_DIR/../VERSION" 2>/dev/null || echo dev)"
     # A detached session ignores -x/-y unless the window size is pinned manually
     tm set-option   -t "=$NAME:" window-size manual
     tm resize-window -t "=$NAME:" -x "$width" -y "$height"
@@ -243,6 +283,7 @@ case "$ACTION" in
         ;;
     open)
         check_config
+        check_version
         has_session || { check_workspace; create_session; }
         attach_session
         ;;

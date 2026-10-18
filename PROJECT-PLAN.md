@@ -26,6 +26,7 @@ two can be used side by side (not at the same time on the same workspace).
 | 0.1.0 | Problems panel, explorer reveal, build output left out of file search, cheat sheet at start |
 | 0.1.0 | claude starts connected to nvim (`--ide`) with instructions for this setup (`claude/abl-tmux.md`) |
 | 0.2.0 | Ctrl+click on a file name in the terminal or claude opens it in nvim |
+| 0.3.0-beta.2 | Update notice: what's new and an offer to rerun `install.sh` after a deploy |
 | 0.3.0-beta.1 | VS Code tasks (Ctrl+Alt+T) with filePicker inputs; terminal title `user@host workspace`; user guide (`:Guide`) |
 | 0.3.0-beta.1 | WezTerm (CCE config, branch `clipboard-image-paste`): image paste into claude over SSH, tab shows the workspace |
 
@@ -38,7 +39,7 @@ Details per change: `RELEASE-NOTES.md`; test results and decisions: `setup-notes
 - **Tasks and OpenEdge character UI:** ChUI needs at least 80x25 and reads the size only at startup;
   the terminal pane is smaller. Decide: run each task in its own tmux window (a tab in the status
   bar, full size; recommended) or zoom the terminal pane before every task.
-- **Release 0.3.0:** 0.3.0-beta.1 is deployed (2026-10-18); release after the tasks/ChUI decision and user feedback.
+- **Release 0.3.0:** 0.3.0-beta.2 is deployed (2026-10-18); release after the tasks/ChUI decision and user feedback.
 - **WezTerm:** confirm Ctrl+Shift+click opens URLs inside abl-tmux; merge `clipboard-image-paste` into
   `master` of the WezTerm config.
 

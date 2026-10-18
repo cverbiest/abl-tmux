@@ -15,7 +15,9 @@ writes the version (`git describe`) to `VERSION`; run it again to update, with s
 isn't writable for you. It only writes into a new directory or an earlier copy, and says when the
 plugins changed.
 
-Each user runs `/opt/abl-tmux/install.sh` once, and again when `deploy.sh` reports changed plugins.
+Each user runs `/opt/abl-tmux/install.sh` once. After a deploy, `abl-tmux` shows users what's new
+(from `RELEASE-NOTES.md`) and offers to rerun `install.sh`; it compares the deployed `VERSION` with
+the one `install.sh` recorded in `~/.local/state/abl-tmux/installed-version`.
 Plugins install into their own `~/.local/share/nvim-abl`, at the versions in `nvim/lazy-lock.json`;
 when they can't write the shared copy, lazy keeps their lockfile there too.
 

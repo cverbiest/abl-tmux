@@ -216,6 +216,13 @@ With the CCE WezTerm config (github.com/ccecvb/wezterm-config, branch `clipboard
 bash, Python and PowerShell have language servers (bashls, pyright, powershell_es): completion,
 hover, definition, problems.
 
+## Updates
+
+After an update of abl-tmux, the next `abl-tmux` shows what's new and asks to run `install.sh` again
+(plugins and links); answer Enter. When sessions from the older version are still running, it says so:
+close them with `abl-tmux -c` in each workspace, then `abl-tmux -K`, and start again. `abl-tmux -V`
+shows the version; the full list of changes is in `RELEASE-NOTES.md` next to it.
+
 ## Troubleshooting
 
 | Problem | What to do |

@@ -4,6 +4,11 @@ Updating: an admin runs `deploy.sh` from the repo (it copies to `/opt/abl-tmux`)
 that plugins changed, every user runs `/opt/abl-tmux/install.sh` again. Restart nvim in running
 sessions, and `abl-tmux -r` to restart claude.
 
+## 0.3.0-beta.2 (2026-10-18)
+
+- **Update notice:** after a deploy, `abl-tmux` shows what's new and offers to run `install.sh`, and
+  says when running sessions still use an older version.
+
 ## 0.3.0-beta.1 (2026-10-18)
 
 Beta: VS Code tasks and the ChUI handling may still change (see `PROJECT-PLAN.md`).
