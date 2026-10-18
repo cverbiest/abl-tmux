@@ -10,6 +10,9 @@ sessions, and `abl-tmux -r` to restart claude.
   Marketplace) and uses it when VS Code's copy is missing or older. `abl-tmux -V` shows which one.
 - Neovim comes from the release tarball instead of the AppImage: no FUSE mount per nvim, nothing to
   clean up after a crash, works on hosts without FUSE.
+- Ctrl+P no longer follows `.gitignore`: it finds gitignored sources and leaves out only build output
+  (`.builder/`, r-code, `buildDirectory` except its `_buildinfo/`) and `.git/`. Hidden files like
+  `.vscode/` are found too. Own rules in `.vscode/abl-tmux.ignore` (user guide, Advanced).
 
 ## 0.3.0-beta.3 (2026-10-18)
 

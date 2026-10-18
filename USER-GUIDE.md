@@ -179,8 +179,10 @@ covers the files the language server has reported on, mostly the ones you opened
 ### Files and search
 
 Ctrl+P and search in files leave out build output: `.builder/`, `*.r` and the `buildDirectory` of
-`openedge-project.json` (and its profiles). `Space f a` searches all files. The explorer (Ctrl+B) shows
-git status per file.
+`openedge-project.json` (and its profiles); Ctrl+P keeps `_buildinfo/` in it. Ctrl+P doesn't follow
+`.gitignore`, so gitignored sources are found too, and so are hidden files like `.vscode/` (not
+`.git/`); to change what it leaves out, see [Quick open exclusions](#quick-open-exclusions).
+`Space f a` searches all files. The explorer (Ctrl+B) shows git status per file.
 
 ### VS Code tasks
 
@@ -219,6 +221,36 @@ With the CCE WezTerm config (github.com/ccecvb/wezterm-config, branch `clipboard
 
 bash, Python and PowerShell have language servers (bashls, pyright, powershell_es): completion,
 hover, definition, problems.
+
+## Advanced
+
+### Quick open exclusions
+
+Ctrl+P (`Space f f`) lists files with ripgrep and leaves out, in gitignore syntax:
+
+```gitignore
+.git/
+.builder/
+*.r
+/tty/*               # the buildDirectory of openedge-project.json and of each profile
+!/tty/_buildinfo/    # ... except _buildinfo/
+```
+
+Add your own rules in `.vscode/abl-tmux.ignore` in the workspace folder (gitignore syntax, paths
+relative to the workspace folder). They come after the rules above and win over them:
+
+```gitignore
+# leave out
+tmp/
+*.log
+# show again
+!*.r
+!/tty/test/
+```
+
+The file is read each time Ctrl+P opens; no restart needed. `.gitignore` is not used, and search in
+files (Ctrl+Shift+F) doesn't read this file. The defaults are in
+`nvim/lua/abl/plugins/telescope.lua` (`find_files`).
 
 ## Updates
 
