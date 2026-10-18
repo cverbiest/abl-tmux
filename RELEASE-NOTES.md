@@ -4,6 +4,13 @@ Updating: an admin runs `deploy.sh` from the repo (it copies to `/opt/abl-tmux`)
 that plugins changed, every user runs `/opt/abl-tmux/install.sh` again. Restart nvim in running
 sessions, and `abl-tmux -r` to restart claude.
 
+## Unreleased
+
+- **No VS Code needed:** abl-tmux brings the vscode-abl language server along (newest stable from the
+  Marketplace) and uses it when VS Code's copy is missing or older. `abl-tmux -V` shows which one.
+- Neovim comes from the release tarball instead of the AppImage: no FUSE mount per nvim, nothing to
+  clean up after a crash, works on hosts without FUSE.
+
 ## 0.3.0-beta.3 (2026-10-18)
 
 - **Recent tmux and Neovim:** abl-tmux brings tmux 3.7c (was 3.2a on RHEL 9) and Neovim 0.12.6 along

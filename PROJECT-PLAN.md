@@ -26,6 +26,7 @@ two can be used side by side (not at the same time on the same workspace).
 | 0.1.0 | Problems panel, explorer reveal, build output left out of file search, cheat sheet at start |
 | 0.1.0 | claude starts connected to nvim (`--ide`) with instructions for this setup (`claude/abl-tmux.md`) |
 | 0.2.0 | Ctrl+click on a file name in the terminal or claude opens it in nvim |
+| unreleased | Bundled vscode-abl language server for users without VS Code; Neovim from the tarball (no FUSE) |
 | 0.3.0-beta.3 | Bundled tmux 3.7c and Neovim 0.12.6 (`fetch-tools.sh`), native packages as fallback |
 | 0.3.0-beta.2 | Update notice: what's new and an offer to rerun `install.sh` after a deploy |
 | 0.3.0-beta.1 | VS Code tasks (Ctrl+Alt+T) with filePicker inputs; terminal title `user@host workspace`; user guide (`:Guide`) |

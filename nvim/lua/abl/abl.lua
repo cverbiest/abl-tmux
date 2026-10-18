@@ -1,5 +1,6 @@
 -- OpenEdge ABL: filetype and the Riverside language server from the vscode-abl
--- extension (riversidesoftware.openedge-abl-lsp), reused as-is from ~/.vscode-server.
+-- extension (riversidesoftware.openedge-abl-lsp), reused as-is from ~/.vscode-server
+-- or from tools/ (fetch-tools.sh).
 -- The server gets the same "abl.*" settings as in VS Code, read from the workspace.
 
 -- Used when no VS Code settings list OpenEdge installations (abl.configuration.runtimes)
@@ -13,19 +14,35 @@ vim.filetype.add({
     extension = { p = "abl", i = "abl", w = "abl", cls = "abl" },
 })
 
--- Newest installed copy of the extension
+-- The extension's newest copy: the user's VS Code (~/.vscode*/extensions) or the one
+-- fetch-tools.sh downloaded into tools/ (for users without VS Code); with equal versions
+-- VS Code's. Skips ~/.vscode-server-bad and folders VS Code marked obsolete (to be deleted).
 local function extension_dir()
-    local dirs = vim.fn.glob(vim.env.HOME .. "/.vscode*/extensions/riversidesoftware.openedge-abl-lsp-*", false, true)
-    dirs = vim.tbl_filter(function(d) return not d:find("%-bad/") end, dirs)
-    table.sort(dirs, function(a, b)
-        return vim.version.lt(a:match("lsp%-([%d.]+)"), b:match("lsp%-([%d.]+)"))
+    local name = "riversidesoftware.openedge-abl-lsp-*"
+    local tools = vim.fs.dirname(vim.fn.resolve(vim.fn.stdpath("config"))) .. "/tools/"
+    local found = {}
+    for _, d in ipairs(vim.fn.glob(vim.env.HOME .. "/.vscode*/extensions/" .. name, false, true)) do
+        local folder = vim.fs.dirname(d)
+        local obsolete = require("abl.vscode").read(folder .. "/.obsolete")
+        if not d:find("%-bad/") and not obsolete[vim.fs.basename(d)] then
+            found[#found + 1] = { dir = d, vscode = true }
+        end
+    end
+    for _, d in ipairs(vim.fn.glob(tools .. name, false, true)) do
+        found[#found + 1] = { dir = d, vscode = false }
+    end
+    for _, f in ipairs(found) do f.version = vim.version.parse(f.dir:match("lsp%-([%d.]+)") or "0") end
+    table.sort(found, function(a, b)
+        if vim.version.eq(a.version, b.version) then return not a.vscode and b.vscode end
+        return vim.version.lt(a.version, b.version)
     end)
-    return dirs[#dirs]
+    return found[#found] and found[#found].dir
 end
 
 local ext = extension_dir()
 if not ext then
-    vim.notify("ABL language server not found (riversidesoftware.openedge-abl-lsp extension)", vim.log.levels.WARN)
+    vim.notify("ABL language server not found: install the vscode-abl extension in VS Code, or run fetch-tools.sh",
+        vim.log.levels.WARN)
     return
 end
 

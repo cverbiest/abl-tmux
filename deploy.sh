@@ -48,4 +48,5 @@ echo "Deployed $version to $TARGET (was: $old)."
 if [ "$plugins_changed" = yes ]; then
     echo "Plugins changed: every user runs $TARGET/install.sh again."
 fi
-echo "Restart nvim (and abl-tmux -r for claude) in running sessions to pick up the update."
+echo "Users get an update notice on their next abl-tmux (what's new, rerun install.sh, restart"
+echo "running sessions: abl-tmux -c in each workspace, then abl-tmux -K)."

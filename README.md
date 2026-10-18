@@ -10,10 +10,12 @@ window. It opens existing VS Code ABL workspaces as they are and reuses the vsco
 
 ## Installing and updating (admin)
 
-This is a git repo. `./fetch-tools.sh` downloads the latest stable tmux (static build from
-github.com/tmux/tmux-builds) and Neovim (AppImage) into `tools/bin` (not in git); the launcher and
-`install.sh` use them instead of the native packages (unless `ABL_TMUX_NATIVE=1`). Run it again to
-update them, then deploy. `./deploy.sh [target]` copies what users need to `/opt/abl-tmux` (or `target`) and
+This is a git repo. `./fetch-tools.sh` downloads into `tools/` (not in git, about 250 MB):
+the latest stable tmux (static build from github.com/tmux/tmux-builds) and Neovim (release tarball,
+no FUSE needed), which the launcher and `install.sh` use instead of the native packages (unless
+`ABL_TMUX_NATIVE=1`); and the vscode-abl extension from the VS Code Marketplace (newest stable,
+`--pre-release` for the newest pre-release) for users without VS Code. nvim uses the newest of that
+and the user's VS Code copy. Run it again to update, then deploy. `./deploy.sh [target]` copies what users need to `/opt/abl-tmux` (or `target`) and
 writes the version (`git describe`) to `VERSION`; run it again to update, with sudo when the target
 isn't writable for you. It only writes into a new directory or an earlier copy, copies `tools/` when
 present, and says when the plugins changed.

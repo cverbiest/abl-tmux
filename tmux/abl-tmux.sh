@@ -56,6 +56,20 @@ CLAUDE_CMD=(claude --ide)
 CLAUDE_MD=$(readlink -f "$SCRIPT_DIR/../claude/abl-tmux.md" || true)
 [ -f "$CLAUDE_MD" ] && CLAUDE_CMD+=(--append-system-prompt-file "$CLAUDE_MD")
 
+# The vscode-abl extension nvim uses (as in abl.lua): the newest of VS Code's and tools/,
+# VS Code's with equal versions; not ~/.vscode-server-bad or folders VS Code marked obsolete
+abl_lsp_dir() {
+    local d v
+    for d in "$HOME"/.vscode*/extensions/riversidesoftware.openedge-abl-lsp-* \
+        "$SCRIPT_DIR"/../tools/riversidesoftware.openedge-abl-lsp-*; do
+        [ -d "$d" ] || continue
+        case $d in */.vscode*-bad/*) continue ;; esac
+        grep -qF "\"$(basename "$d")\":true" "$(dirname "$d")/.obsolete" 2>/dev/null && continue
+        v=${d##*openedge-abl-lsp-}
+        case $d in */.vscode*) echo "${v%%-*} 2 $(readlink -f "$d")" ;; *) echo "${v%%-*} 1 $(readlink -f "$d")" ;; esac
+    done | sort -k1,1V -k2,2n | tail -1 | cut -d' ' -f3-
+}
+
 ACTION=open
 case "${1:-}" in
     -l|--list)     ACTION=list;   shift ;;
@@ -67,6 +81,7 @@ case "${1:-}" in
     -V|--version)
         cat "$SCRIPT_DIR/../VERSION" 2>/dev/null || echo "development copy (no VERSION)"
         echo "$("$ABL_TMUX_BIN" -V) ($ABL_TMUX_BIN), $("$ABL_NVIM_BIN" --version | head -1) ($ABL_NVIM_BIN)"
+        echo "ABL language server: $(abl_lsp_dir || true)"
         exit 0 ;;
     -h|--help)     usage; exit 0 ;;
     -*)            echo "Unknown option: $1" >&2; usage >&2; exit 2 ;;

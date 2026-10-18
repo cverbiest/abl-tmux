@@ -12,9 +12,12 @@ Progress and test results: `setup-notes.md`; read it first when resuming ("do ne
   ABL: `lua/abl/abl.lua` (filetype + language server), `ftplugin/abl.lua`, `syntax/abl.lua`.
 - `tmux/tmux.conf`, `tmux/abl-tmux.sh`: separate tmux server (`tmux -L abl`); launcher linked as `~/bin/abl-tmux`.
   `tmux/abl-open.sh`: Ctrl+click on a file name opens it in nvim (via `$ABL_NVIM_SOCKET`).
-- `fetch-tools.sh`: downloads the latest tmux (tmux/tmux-builds, static) and nvim (AppImage) into `tools/bin`
+- `fetch-tools.sh`: downloads the latest tmux (tmux/tmux-builds, static) and nvim (release tarball, in
+  `tools/nvim`, linked as `tools/bin/nvim`; not the AppImage, which needs FUSE) into `tools/bin`
   (not in git; deploy.sh copies it). The launcher and install.sh prefer them over the native packages
   (`ABL_TMUX_NATIVE=1`: native) and export `ABL_TMUX_BIN`/`ABL_NVIM_BIN`; tmux.conf uses `@abl_tmux`.
+  It also unpacks vscode-abl from the Marketplace into `tools/riversidesoftware.openedge-abl-lsp-<ver>-linux-x64`;
+  `abl.lua` (and `abl-tmux -V`) take the newest of that and `~/.vscode*/extensions`, VS Code's on a tie.
 - `install.sh`: per user, creates the links and installs the plugins. `deploy.sh [target]`: copies the
   repo to `/opt/abl-tmux` (or target) for all users. `RELEASE-NOTES.md`: user-visible changes per version.
 - `nvim/cheatsheet.md` (`lua/abl/cheatsheet.lua`): opens when nvim starts without files; most used keys first.
@@ -63,5 +66,6 @@ Progress and test results: `setup-notes.md`; read it first when resuming ("do ne
 
 - tmux/nvim: bundled `tools/bin` (3.7c / 0.12.6) or native (`/usr/bin/tmux` 3.2a, snap nvim 0.12.5).
 - OpenEdge: `/usr/oe128` (12.8, = `/usr/oe12811`), `/usr/oe122`; `DLC=/usr/dlc`. Runtimes are listed in `abl.lua`.
-- ABL language server: `~/.vscode-server/extensions/riversidesoftware.openedge-abl-lsp-*` (unlicensed).
+- ABL language server: `~/.vscode-server/extensions/riversidesoftware.openedge-abl-lsp-*` (unlicensed; the user
+  follows the pre-release channel, 1.37.x) or `tools/` (Marketplace stable, 1.36.0).
 - tree-sitter-abl: `~/projects/tree-sitter-abl` (no highlight queries; parses too little real code to use yet).

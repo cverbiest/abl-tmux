@@ -22,8 +22,8 @@ project file and settings as VS Code, and changes nothing in the workspace.
 ```
 
 This links `~/bin/abl-tmux` and installs the editor plugins for you. It doesn't touch your own nvim
-or tmux setup. You need VS Code with the vscode-abl extension already set up on this server (abl-tmux
-reuses its language server) and Claude Code. Use a terminal of at least 160 columns; WezTerm works well.
+or tmux setup. You need Claude Code. VS Code with the vscode-abl extension is optional: abl-tmux uses
+its language server when it's installed and up to date, and otherwise the copy that comes with abl-tmux. Use a terminal of at least 160 columns; WezTerm works well.
 
 ### Open a workspace
 
@@ -157,8 +157,9 @@ usual (Ctrl+A/F/D/W/V, `gd`, `grn`, `gra`, `grr`).
 
 ### ABL
 
-- **Language server:** the Riverside server from your VS Code extension (`riversidesoftware.openedge-abl-lsp`,
-  the newest copy under `~/.vscode-server/extensions`). It starts with the workspace, as in VS Code, and
+- **Language server:** the Riverside server of the vscode-abl extension (`riversidesoftware.openedge-abl-lsp`):
+  the newest of your VS Code's copy (`~/.vscode-server/extensions`) and the one that comes with abl-tmux;
+  with equal versions your VS Code's. `abl-tmux -V` shows which one. It starts with the workspace, as in VS Code, and
   stops with the editor. `:lsp restart abl` restarts it, e.g. after changing settings.
 - **Project and settings:** `openedge-project.json` as in VS Code (PROPATH, databases, profiles), and the
   `abl.*` settings from VS Code: the remote machine settings, the `.code-workspace` file, then

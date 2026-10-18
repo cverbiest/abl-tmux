@@ -131,3 +131,15 @@ APPL.env in the panes), starts the editor with the full nvim path; tmux.conf run
 - Tested (test session, bundled): versions, PATH in panes, title, Alt+1/2/3, Ctrl+J, Alt+Z, Ctrl+click,
   Ctrl+Alt+T task, compile on save, `abl-tmux -c`. Native fallback (`ABL_TMUX_NATIVE=1`): server 3.2a,
   snap nvim, keys, Ctrl+click.
+- **AppImage → tarball** (2026-10-18): the AppImage mounts itself with FUSE per nvim (/tmp/.mount_nvim*,
+  helper process, needs libfuse2 + /dev/fuse on every host; known orphaned-daemon issue upstream). The release
+  tarball (same build, glibc ≥ 2.31) is unpacked into `tools/nvim`, `tools/bin/nvim` links to it; nvim
+  finds its runtime through the link. Tested: session, Ctrl+click, compile on save, 0 FUSE mounts.
+- Stopped two orphaned `pwsh` (powershell_es) language servers from 2026-10-13 (parent gone).
+- **Language server without VS Code** (2026-10-18): fetch-tools.sh queries the Marketplace
+  (`extensionquery`, flags 19), takes the newest linux-x64 version that isn't a pre-release (`--pre-release`:
+  newest) and unzips `extension/` into `tools/riversidesoftware.openedge-abl-lsp-<ver>-linux-x64` (209 MB,
+  with its JRE). On the Marketplace nearly all recent versions are pre-releases: stable 1.36.0, pre-release
+  1.37.9. abl.lua takes the newest of VS Code's and tools/ (VS Code's on a tie), skipping folders in VS
+  Code's `.obsolete`. Tested: lookup with VS Code (1.37.9), without (HOME elsewhere: tools 1.36.0), tie (VS
+  Code's), compile on save with the tools copy.
