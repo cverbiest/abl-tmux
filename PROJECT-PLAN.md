@@ -28,6 +28,7 @@ two can be used side by side (not at the same time on the same workspace).
 | 0.2.0 | Ctrl+click on a file name in the terminal or claude opens it in nvim |
 | unreleased | Bundled vscode-abl language server for users without VS Code; Neovim from the tarball (no FUSE) |
 | unreleased | Ctrl+P: own exclusions instead of `.gitignore` (`.vscode/abl-tmux.ignore`) |
+| unreleased | Tasks in task panes as VS Code's `presentation.panel` says (shared/dedicated/new), never in the user's terminal |
 | unreleased | Usable outside CCE: `install.sh --no-cce`; `APPL.env` only expected in CCE workspaces, CreateWorkspace offered when missing |
 | 0.3.0-beta.3 | Bundled tmux 3.7c and Neovim 0.12.6 (`fetch-tools.sh`), native packages as fallback |
 | 0.3.0-beta.2 | Update notice: what's new and an offer to rerun `install.sh` after a deploy |
@@ -40,10 +41,10 @@ Details per change: `RELEASE-NOTES.md`; test results and decisions: `setup-notes
 
 ### Open
 
-- **Tasks and OpenEdge character UI:** ChUI needs at least 80x25 and reads the size only at startup;
-  the terminal pane is smaller. Decide: run each task in its own tmux window (a tab in the status
-  bar, full size; recommended) or zoom the terminal pane before every task.
-- **Release 0.3.0:** 0.3.0-beta.3 is deployed (2026-10-18); release after the tasks/ChUI decision and user feedback.
+- **Tasks and OpenEdge character UI:** decided (unreleased): tasks run in task panes next to the
+  terminal (VS Code's `presentation.panel`), zoomed for ChUI. Check with users that this works for
+  long ChUI sessions; a tmux window per task stays the alternative.
+- **Release 0.3.0:** 0.3.0-beta.3 is deployed (2026-10-18); release after user feedback on the task panes.
 - **WezTerm:** confirm Ctrl+Shift+click opens URLs inside abl-tmux; merge `clipboard-image-paste` into
   `master` of the WezTerm config.
 

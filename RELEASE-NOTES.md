@@ -19,6 +19,10 @@ sessions, and `abl-tmux -r` to restart claude.
   `cce-workspace.json` or `oe*/config/CreateWorkspace*.ps1`); external projects just need an
   `openedge-project.json`. `install.sh --no-cce` turns the CCE features off, `--cce` on again.
 - The launcher's questions are fzf lists (Enter picks, Esc stops), as in `abl-tmux --connect`.
+- **Tasks run in task panes,** no longer in your terminal: next to it, reused as `presentation.panel`
+  says (`shared`, `dedicated`, `new`), as in VS Code. When the task ends, any key closes its pane and
+  you're back where you were; before, ending a Progress session left you in the zoomed terminal, and
+  closing that closed your terminal.
 
 ## 0.3.0-beta.3 (2026-10-18)
 

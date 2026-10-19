@@ -29,7 +29,7 @@
   F2                        rename symbol
   Ctrl+Space, Tab/Enter     completion: open, accept
   Shift+Alt+F               format document
-  Ctrl+Alt+T                run a VS Code task (tasks.json) in the terminal
+  Ctrl+Alt+T                run a VS Code task (tasks.json) in a task pane
 
 ## Problems
   F8 / Shift+F8             next / previous problem

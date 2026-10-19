@@ -200,9 +200,16 @@ Ctrl+P and search in files leave out build output: `.builder/`, `*.r` and the `b
 ### VS Code tasks
 
 Ctrl+Alt+T lists the tasks of `.vscode/tasks.json` and the `.code-workspace` file, the last one run
-first, and runs the chosen task in the terminal pane, typed as a visible command line (Ctrl+C stops it).
+first, and runs the chosen task in a task terminal: a pane next to the terminal pane, as VS Code
+opens a task terminal next to yours. Your own terminal is never used for tasks. Ctrl+C stops a task.
 
-- A busy terminal isn't interrupted: the task isn't started.
+- **Which pane** follows the task's `presentation.panel`: `shared` (the default) reuses one task pane
+  for all tasks, `dedicated` one per task, `new` opens a new pane each run. A pane whose task still
+  runs isn't reused; running the same task again then shows it instead of starting it twice.
+- **When the task ends,** the pane says so with the exit code; any key closes it (and ends the
+  zoom). With `"close": true` it closes by itself. `focus: true` puts the cursor in it, `clear` and
+  `echo` work as in VS Code.
+- Tasks get the editor's environment, as VS Code tasks get VS Code's.
 - **Supported:** `shell` and `process` tasks with their `linux` section, `options.cwd` and `env`,
   `${workspaceFolder}`, `${file}` and the other file variables, `${env:…}`,
   `${command:abl.getDlcDirectory}` (`$DLC`), and `${input:…}` of type `promptString`, `pickString`
@@ -211,7 +218,7 @@ first, and runs the chosen task in the terminal pane, typed as a visible command
 - A task that runs `code <file>` opens the file in the editor.
 - **Not supported:** `dependsOn`, problem matchers, other `${command:…}` variables.
 - **OpenEdge character UI** needs at least 80x25 and reads the size at startup: tasks that ask for focus
-  or run `_progres` get the terminal maximized first (Alt+Z restores).
+  or run `_progres` get their task pane maximized first (Alt+Z restores).
 
 ### claude
 

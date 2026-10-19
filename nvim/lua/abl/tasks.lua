@@ -1,6 +1,6 @@
 -- VS Code tasks (Ctrl+Alt+T, :Tasks): pick a task from .vscode/tasks.json or the
--- .code-workspace "tasks", and run it in the terminal pane below, typed as a command line
--- (outside tmux: in a terminal split). Supports shell/process tasks with their "linux"
+-- .code-workspace "tasks", and run it in a task pane next to the terminal pane, reused as
+-- presentation.panel says (outside tmux: in a terminal split). Supports shell/process tasks with their "linux"
 -- overrides, options.cwd/env, the usual ${...} variables, ${command:abl.getDlcDirectory}
 -- ($DLC) and ${input:...} (promptString, pickString, filePicker.pick). Tasks without a
 -- Linux command are left out. A "code" command opens its files in nvim instead.
@@ -157,16 +157,70 @@ local function foreground(pane)
     return pid, tonumber(stat:match("%) %S+ %S+ %S+ %S+ %S+ (%-?%d+)"))
 end
 
--- The terminal pane (abl-tmux's @shell_pane) if it is idle at a shell prompt
-local function shell_pane()
-    local pane = vim.trim(vim.fn.system({ TMUX, "display-message", "-p", "#{@shell_pane}" }))
-    if vim.v.shell_error ~= 0 or pane == "" then return nil, "no terminal pane" end
-    local pid, fg = foreground(pane)
-    if pid and fg ~= pid then
-        local cmd = vim.trim(vim.fn.system({ TMUX, "display-message", "-p", "-t", pane, "#{pane_current_command}" }))
-        return nil, "the terminal is busy (" .. cmd .. "); stop it with Ctrl+C or wait"
+local function tmux(...)
+    return vim.trim(vim.fn.system({ TMUX, ... }))
+end
+
+-- What task_pane looks for: "shared", "dedicated:<label>" or "new"
+local function panel_key(task)
+    local panel = (task.presentation or {}).panel or "shared"
+    return panel == "dedicated" and "dedicated:" .. task.label or panel
+end
+
+-- Task terminals, as in VS Code: tasks never run in the user's terminal pane but in a pane
+-- of their own next to it, which presentation.panel decides on: "shared" (default) is one
+-- pane reused by all tasks, "dedicated" one per task, "new" a new one each run. A pane is
+-- reused once its task has ended (@abl_task_done); a busy one isn't interrupted.
+-- Returns the pane to respawn (or nil for a new one), or nil, message when the task is
+-- still running there.
+-- Also returns any task pane, to split a new one from.
+local function task_pane(task)
+    local key = panel_key(task)
+    local reuse, running, any
+    for row in vim.gsplit(tmux("list-panes", "-F", "#{pane_id}\t#{@abl_task}\t#{@abl_task_done}\t#{@abl_task_label}"), "\n") do
+        local id, k, done, label = unpack(vim.split(row, "\t"))
+        if k ~= "" then any = id end
+        if k == key and key ~= "new" and done == "1" then reuse = reuse or id end
+        -- VS Code: a task that is still running is shown, not started twice
+        if label == task.label and done == "0" then running = id end
     end
-    return pane
+    if running then return nil, running end
+    -- A busy shared terminal doesn't make another task wait: that one gets a new pane
+    return reuse, nil, any
+end
+
+-- nvim's environment for the task (as VS Code tasks get VS Code's), without what belongs to
+-- nvim or this pane
+local function task_env()
+    local args = {}
+    local skip = { TMUX = true, TMUX_PANE = true, NVIM = true, VIM = true, VIMRUNTIME = true, MYVIMRC = true,
+        NVIM_LOG_FILE = true }
+    for k, v in pairs(vim.fn.environ()) do
+        if not skip[k] and k:match("^[%w_]+$") then vim.list_extend(args, { "-e", k .. "=" .. v }) end
+    end
+    return args
+end
+
+-- The script the task pane runs: marks the pane as busy with this task, runs the command
+-- line, marks it done, then VS Code's closing message
+local function task_script(task, line)
+    local p = task.presentation or {}
+    local set = quote(TMUX) .. ' set-option -p -t "$TMUX_PANE" '
+    local s = {
+        set .. "@abl_task " .. quote(panel_key(task)) .. "; " .. set .. "@abl_task_label " .. quote(task.label)
+            .. "; " .. set .. "@abl_task_done 0",
+        quote(TMUX) .. ' select-pane -t "$TMUX_PANE" -T ' .. quote("Task: " .. task.label),
+    }
+    if p.clear then s[#s + 1] = "clear" end
+    if p.echo ~= false then
+        s[#s + 1] = "printf '\\e[2m * Executing task: %s\\e[0m\\n\\n' " .. quote(line)
+    end
+    s[#s + 1] = "bash -c " .. quote(line) .. "; rc=$?"
+    s[#s + 1] = set .. "@abl_task_done 1"
+    if p.close then return table.concat(s, "\n") end
+    s[#s + 1] = "printf '\\n\\e[2m * The task ended (exit %d). Press any key to close the terminal.\\e[0m' $rc"
+    s[#s + 1] = "read -rsn1"
+    return table.concat(s, "\n")
 end
 
 -- OpenEdge character UI needs at least 80x25: tasks that run it interactively, or ask for
@@ -188,20 +242,20 @@ local function zoom_for_chui(pane)
 end
 
 -- Scripts may start the character UI themselves: for the first minute of a task, zoom
--- the pane as soon as a _progres runs in the foreground
+-- the pane as soon as a _progres runs in it (the pane's processes share its session)
 local function watch_for_chui(pane)
     local timer, ticks = vim.uv.new_timer(), 0
     local function stop() timer:stop() timer:close() end
     timer:start(300, 300, vim.schedule_wrap(function()
         ticks = ticks + 1
-        local pid, fg = foreground(pane)
-        if not pid or ticks > 200 or (fg == pid and ticks > 3) then return stop() end
-        if fg ~= pid then
-            vim.fn.system({ "pgrep", "-g", tostring(fg), "-x", "_progres" })
-            if vim.v.shell_error == 0 then
-                zoom_for_chui(pane)
-                stop()
-            end
+        local pid = foreground(pane)
+        if not pid or ticks > 200 or tmux("display-message", "-p", "-t", pane, "#{@abl_task_done}") == "1" then
+            return stop()
+        end
+        vim.fn.system({ "pgrep", "-s", tostring(pid), "-x", "_progres" })
+        if vim.v.shell_error == 0 then
+            zoom_for_chui(pane)
+            stop()
         end
     end))
 end
@@ -250,15 +304,32 @@ local function run(task, inputs, dir, file)
         vim.cmd("botright split | terminal " .. line)
         return
     end
-    local pane, why = shell_pane()
-    if not pane then return vim.notify("Task " .. task.label .. ": " .. why, vim.log.levels.WARN) end
+    local reuse, running, other = task_pane(task)
+    if running then
+        vim.fn.system({ TMUX, "select-pane", "-t", running })
+        return vim.notify("Task " .. task.label .. " is still running (Ctrl+C stops it)", vim.log.levels.INFO)
+    end
+    -- options.cwd is in the command line (cd); relative paths are from the workspace folder
+    local cmd = vim.list_extend({ "-c", dir }, task_env())
+    vim.list_extend(cmd, { "bash", "-c", task_script(task, line) })
+    local pane
+    if reuse then
+        tmux("set-option", "-p", "-t", reuse, "@abl_task_done", "0")
+        vim.fn.system(vim.list_extend({ TMUX, "respawn-pane", "-k", "-t", reuse }, cmd))
+        pane = reuse
+    else
+        -- Next to the terminal pane, like a terminal tab in VS Code's panel; more task panes
+        -- share the space of the first, the terminal keeps its half
+        local shell = tmux("display-message", "-p", "#{@shell_pane}")
+        local target = other or (shell ~= "" and shell or nil)
+        local where = target and { "-h", "-t", target } or { "-v", "-l", "20%" }
+        pane = tmux(unpack(vim.list_extend(vim.list_extend({ "split-window", "-d", "-P", "-F", "#{pane_id}" }, where), cmd)))
+        if vim.v.shell_error ~= 0 then return vim.notify("Task " .. task.label .. ": " .. pane, vim.log.levels.WARN) end
+    end
     if wants_screen(task, line) then
         vim.fn.system({ TMUX, "select-pane", "-t", pane })
         zoom_for_chui(pane)
     end
-    vim.fn.system({ TMUX, "send-keys", "-t", pane, "C-e", "C-u" })
-    vim.fn.system({ TMUX, "send-keys", "-t", pane, "-l", line })
-    vim.fn.system({ TMUX, "send-keys", "-t", pane, "Enter" })
     watch_for_chui(pane)
     if (task.presentation or {}).focus then vim.fn.system({ TMUX, "select-pane", "-t", pane }) end
 end
