@@ -1,6 +1,8 @@
 # abl-tmux: ABL editing in nvim + claude + tmux
 
-A VS Code-like setup for OpenEdge ABL: nvim (editor), Claude Code and a bash terminal in one tmux
+This is a spare time project, updates will be accordingly
+
+A VS Code-like setup for OpenEdge ABL: nvim (Neovim editor), Claude Code and a bash terminal in one tmux
 window. It opens existing VS Code ABL workspaces as they are and reuses the vscode-abl language server.
 
 - **Using it:** [USER-GUIDE.md](USER-GUIDE.md): getting started and all features (in nvim: `:Guide`).
@@ -41,3 +43,10 @@ when they can't write the shared copy, lazy keeps their lockfile there too.
 | `install.sh`, `deploy.sh` | Per-user setup; copy to `/opt/abl-tmux` |
 | `fetch-tools.sh`, `tools/bin/` | Download recent tmux and nvim; the downloads (not in git) |
 | `openedge-project.json`, `src/`, `dump/`, `.vscode/` | Local test project (`.vscode/tasks.json` has sample tasks); only `.vscode/` is in git |
+
+## License
+
+MIT, see [LICENSE](LICENSE). This covers the files in this repository. What `fetch-tools.sh` downloads
+into `tools/` (and `deploy.sh` copies along) keeps its own license: tmux (ISC), Neovim (Apache 2.0 and
+Vim license) and the vscode-abl extension (MIT; the ABL language server in it is Riverside Software's,
+under their terms).

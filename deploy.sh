@@ -12,7 +12,7 @@ set -euo pipefail
 
 HERE=$(dirname "$(readlink -f "$0")")
 TARGET=$(readlink -m "${1:-/opt/abl-tmux}")
-FILES=(install.sh README.md USER-GUIDE.md RELEASE-NOTES.md nvim tmux claude)
+FILES=(install.sh LICENSE README.md USER-GUIDE.md RELEASE-NOTES.md nvim tmux claude)
 # tmux and nvim downloaded by fetch-tools.sh; without them users get the native packages
 if [ -x "$HERE/tools/bin/tmux" ] && [ -x "$HERE/tools/bin/nvim" ]; then
     FILES+=(tools)
