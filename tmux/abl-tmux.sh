@@ -15,9 +15,9 @@
 # One session per workspace, named abl-<dirname>. The workspace root is the
 # nearest directory up from DIR with an openedge-project.json (else DIR itself);
 # every pane gets it as $VSCODE_WS. Asks before opening a root without
-# openedge-project.json. CCE workspaces (APPL.env, cce-workspace.json or
-# oe*/config/CreateWorkspace*.ps1) also need APPL.env: without it, offers to run
-# CreateWorkspace. install.sh --no-cce turns the CCE checks off.
+# openedge-project.json. Before a new session, runs the open hooks: the executables in
+# /etc/abl-tmux/open.d and ~/.config/abl-tmux/open.d, with the workspace root as argument
+# (site checks, e.g. a workspace setup that isn't done yet); one that fails stops the start.
 #
 # Usage: abl-tmux.sh [OPTION] [DIR | FILE.code-workspace]
 #   (no option)     : attach to the session for DIR (default: $PWD), creating it if needed
@@ -72,13 +72,16 @@ abl_lsp_dir() {
     done | sort -k1,1V -k2,2n | tail -1 | cut -d' ' -f3-
 }
 
-# CCE features (APPL.env, CreateWorkspace): on unless install.sh --no-cce wrote cce=0 in the
-# user's config; ABL_TMUX_CCE=0/1 overrides it
-CONFIG_FILE=${XDG_CONFIG_HOME:-$HOME/.config}/abl-tmux/config
-cce_enabled() {
-    local v=${ABL_TMUX_CCE:-}
-    [ -n "$v" ] || v=$(sed -n 's/^cce=//p' "$CONFIG_FILE" 2>/dev/null | tail -1)
-    [ "${v:-1}" != 0 ]
+# Open hooks: system-wide first, then the user's
+HOOK_DIRS=(/etc/abl-tmux/open.d "${XDG_CONFIG_HOME:-$HOME/.config}/abl-tmux/open.d")
+open_hooks() {
+    local d f
+    for d in "${HOOK_DIRS[@]}"; do
+        for f in "$d"/*; do
+            case $f in *~|*.bak|*.disabled) continue ;; esac
+            if [ -f "$f" ] && [ -x "$f" ]; then echo "$f"; fi
+        done
+    done
 }
 
 ACTION=open
@@ -93,7 +96,8 @@ case "${1:-}" in
         cat "$SCRIPT_DIR/../VERSION" 2>/dev/null || echo "development copy (no VERSION)"
         echo "$("$ABL_TMUX_BIN" -V) ($ABL_TMUX_BIN), $("$ABL_NVIM_BIN" --version | head -1) ($ABL_NVIM_BIN)"
         echo "ABL language server: $(abl_lsp_dir || true)"
-        echo "CCE features: $(cce_enabled && echo on || echo "off (install.sh --cce to turn on)")"
+        hooks=$(open_hooks | paste -sd ' ')
+        echo "Open hooks: ${hooks:-none}"
         exit 0 ;;
     -h|--help)     usage; exit 0 ;;
     -*)            echo "Unknown option: $1" >&2; usage >&2; exit 2 ;;
@@ -191,17 +195,6 @@ plain_version() {
     echo "${v%%-[0-9]*-g*}"
 }
 
-# A CCE workspace has an APPL.env, a cce-workspace.json or CreateWorkspace in oe*/config;
-# other workspaces (external projects) only need an openedge-project.json
-is_cce_workspace() {
-    local f
-    cce_enabled || return 1
-    for f in "$DIR/APPL.env" "$DIR/cce-workspace.json" "$DIR"/oe*/config/CreateWorkspace*.ps1; do
-        [ -f "$f" ] && return 0
-    done
-    return 1
-}
-
 # Asks QUESTION and prints the key of the option picked: with fzf when installed, else by
 # typing the key. Options are "key<TAB>label"; prints nothing when cancelled (Esc, Enter).
 choose() {
@@ -218,43 +211,21 @@ choose() {
     for opt in "$@"; do [ -n "$answer" ] && [ "$answer" = "${opt%%	*}" ] && echo "$answer"; done
 }
 
-# A CCE workspace without APPL.env (CreateWorkspace not run yet, or not completed): offer to
-# run CreateWorkspace from oe*/config, which writes it. Returns 1 when the user chose to
-# continue without APPL.env.
-offer_create_workspace() {
-    local tui linux answer script rc options
-    [ ! -f "$DIR/APPL.env" ] && [ -t 0 ] || return 0
-    for tui in "$DIR"/oe*/config/CreateWorkspace_tui.ps1; do [ -f "$tui" ] && break; done
-    [ -f "$tui" ] || return 0
-    linux=$(dirname "$tui")/CreateWorkspace_linux.ps1
-    options=("t	run CreateWorkspace_tui.ps1 (forms)")
-    [ -f "$linux" ] && options+=("l	run CreateWorkspace_linux.ps1 (questions in the terminal)")
-    options+=("c	continue without APPL.env" "s	stop")
-    answer=$(choose "${DIR/#$HOME/\~} has no APPL.env. Create the workspace?" "${options[@]}")
-    case "$answer" in
-        t) script=$tui ;;
-        l) script=$linux ;;
-        c) return 1 ;;
-        *) echo "Not started." >&2; exit 1 ;;
-    esac
-    command -v pwsh >/dev/null || { echo "pwsh is not installed; can't run $script." >&2; exit 1; }
-    pwsh -File "$script" || { rc=$?; echo "${script##*/} failed (exit $rc)." >&2; }
-    [ -f "$DIR/APPL.env" ] || echo "Still no APPL.env in $DIR." >&2
+# Runs the open hooks with the workspace root; stops when one fails
+run_open_hooks() {
+    local hook rc hooks
+    mapfile -t hooks < <(open_hooks)
+    # On the terminal: hooks may ask questions
+    for hook in "${hooks[@]}"; do
+        "$hook" "$DIR" || { rc=$?; echo "Not started: ${hook/#$HOME/\~} stopped it (exit $rc)." >&2; exit 1; }
+    done
 }
 
-# A workspace root has these (APPL.env only in a CCE workspace); ask before opening a
-# directory without them
+# A workspace root has an openedge-project.json; ask before opening a directory without one
 check_workspace() {
-    local f missing=() appl_env=
-    if is_cce_workspace; then
-        appl_env=APPL.env
-        offer_create_workspace || appl_env=
-    fi
-    for f in openedge-project.json $appl_env; do
-        [ -f "$DIR/$f" ] || missing+=("$f")
-    done
-    [ ${#missing[@]} -eq 0 ] && return 0
-    echo "WARNING: $DIR is missing ${missing[*]}; it may not be a workspace root." >&2
+    run_open_hooks
+    [ -f "$DIR/openedge-project.json" ] && return 0
+    echo "WARNING: $DIR has no openedge-project.json; it may not be a workspace root." >&2
     case "$(choose "Open it anyway?" "n	no, stop" "y	yes, open it")" in
         y) ;;
         *) echo "Not started." >&2; exit 1 ;;

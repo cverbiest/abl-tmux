@@ -25,11 +25,6 @@ This links `~/bin/abl-tmux` and installs the editor plugins for you. It doesn't 
 or tmux setup. You need Claude Code. VS Code with the vscode-abl extension is optional: abl-tmux uses
 its language server when it's installed and up to date, and otherwise the copy that comes with abl-tmux. Use a terminal of at least 160 columns; WezTerm works well.
 
-Not at CCE? Install with `install.sh --no-cce`: abl-tmux then leaves out the CCE features (the
-`APPL.env` check and the CreateWorkspace offer). `install.sh --cce` turns them on again; a plain
-`install.sh` keeps your choice, and `abl-tmux -V` shows it. `ABL_TMUX_CCE=0` or `1` overrides it for
-one start.
-
 ### Open a workspace
 
 ```
@@ -89,21 +84,17 @@ itself. To leave everything running and come back later: **Alt+B d** (detach), t
 | `abl-tmux -k [dir]` | Close the session without quitting the editor first |
 | `abl-tmux -K` | Close all sessions |
 | `abl-tmux -r [dir]` | Restart claude |
-| `abl-tmux -V` | Show the installed version, which tmux and nvim it uses, and whether CCE features are on |
+| `abl-tmux -V` | Show the installed version, which tmux, nvim and language server it uses, and the open hooks |
 
 - **Workspace root:** the nearest folder up from `dir` with an `openedge-project.json`, so you can start
   from any git project inside it. When the root has no `openedge-project.json`, abl-tmux asks before
   opening it.
-- **CCE workspaces** (with CCE features on): a root with an `APPL.env`, a `cce-workspace.json` or
-  `oe*/config/CreateWorkspace*.ps1` is a CCE workspace and also needs `APPL.env`. Other workspaces,
-  such as external projects, only need the `openedge-project.json`.
-- **New CCE workspace without `APPL.env`:** when the root has `oe*/config/CreateWorkspace_tui.ps1`,
-  abl-tmux offers to run it (forms) or `CreateWorkspace_linux.ps1` (questions in the terminal)
-  first; these write `APPL.env`. You can also open the workspace without it, or stop.
+- **Site checks:** before it opens a new session, abl-tmux runs the [open hooks](#open-hooks) that
+  are installed, e.g. one that offers to finish a workspace setup first.
 - **Questions** at startup are fzf lists: arrow keys and Enter pick, Esc stops. Without fzf you type
   the letter shown.
-- **`$VSCODE_WS`** is set to the root in every pane; the CCE shell setup then loads the workspace's
-  `APPL.env` and changes to `$APPL`, as in VS Code's terminal.
+- **`$VSCODE_WS`** is set to the root in every pane, as VS Code's terminal setup can use it: a shell
+  profile can, for example, load workspace settings from it.
 - **One session per workspace,** named `abl-<folder>`; the terminal title shows `user@host workspace`.
 - Start abl-tmux from a plain terminal, not from inside another tmux.
 - **tmux and nvim versions:** abl-tmux brings recent tmux and Neovim builds along and uses those
@@ -229,7 +220,7 @@ opens a task terminal next to yours. Your own terminal is never used for tasks. 
 
 ### WezTerm
 
-With the CCE WezTerm config (github.com/ccecvb/wezterm-config, branch `clipboard-image-paste`):
+With the WezTerm config at github.com/cverbiest/wezterm-config:
 
 - **Ctrl+Alt+V** pastes a clipboard image as a file path, e.g. into claude. On a server the image is
   copied to `~/.cache/wezterm-clip/` there first (removed after 7 days). Text pastes as usual.
@@ -243,6 +234,26 @@ bash, Python and PowerShell have language servers (bashls, pyright, powershell_e
 hover, definition, problems.
 
 ## Advanced
+
+### Open hooks
+
+Before abl-tmux opens a new session, it runs the executable files in `/etc/abl-tmux/open.d/` (for
+all users, set up by the admin) and then `~/.config/abl-tmux/open.d/` (your own), in name order, with
+the workspace folder as argument. They run on the terminal, so they can ask questions. A hook that
+exits with anything but 0 stops the start. Files ending in `~`, `.bak` or `.disabled` are skipped;
+`abl-tmux -V` lists the hooks it would run.
+
+Use them for checks that belong to your site rather than to abl-tmux, such as a workspace that needs a
+setup step before it can be used:
+
+```bash
+#!/usr/bin/env bash
+# ~/.config/abl-tmux/open.d/env-check: workspaces with a setup script need its env file
+ws=$1
+[ -f "$ws/setup.sh" ] && [ ! -f "$ws/workspace.env" ] || exit 0
+read -r -p "$ws isn't set up yet. Run setup.sh first? [Y/n] " answer
+case $answer in [nN]*) exit 1 ;; *) "$ws/setup.sh" ;; esac
+```
 
 ### Quick open exclusions
 

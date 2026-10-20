@@ -97,10 +97,10 @@ has a working VS Code Remote setup (extension under their own `~/.vscode-server`
 
 ## WezTerm (2026-10-17)
 
-The user's terminal is WezTerm on Windows (config: github.com/ccecvb/wezterm-config, CCE fork), servers are
+The user's terminal is WezTerm on Windows (config: github.com/cverbiest/wezterm-config, master; github.com/ccecvb/wezterm-config has the same master plus anything CCE-specific), servers are
 WezTerm SSH domains from `~/.ssh/config`.
 
-- **Image paste:** branch `clipboard-image-paste` (pushed, not merged): `utils/clip-paste.lua` on Ctrl+Alt+V,
+- **Image paste:** branch `clipboard-image-paste`, merged into `master` of both WezTerm config repos (2026-10-20): `utils/clip-paste.lua` on Ctrl+Alt+V,
   adapted from picton.uk's xclip/wl-paste version. PowerShell saves the clipboard image; on an SSH pane
   ssh/scp (BatchMode) copy it to `~/.cache/wezterm-clip/` on the host and the remote path is pasted.
   **Works** (2026-10-17, user on Windows): the screenshot arrived in `~/.cache/wezterm-clip/` and claude

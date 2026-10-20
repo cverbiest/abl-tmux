@@ -29,11 +29,11 @@ two can be used side by side (not at the same time on the same workspace).
 | unreleased | Bundled vscode-abl language server for users without VS Code; Neovim from the tarball (no FUSE) |
 | unreleased | Ctrl+P: own exclusions instead of `.gitignore` (`.vscode/abl-tmux.ignore`) |
 | unreleased | Tasks in task panes as VS Code's `presentation.panel` says (shared/dedicated/new), never in the user's terminal |
-| unreleased | Usable outside CCE: `install.sh --no-cce`; `APPL.env` only expected in CCE workspaces, CreateWorkspace offered when missing |
+| unreleased | Site-neutral: open hooks (`/etc/abl-tmux/open.d`) for site checks; the CCE `APPL.env`/CreateWorkspace check is a hook outside abl-tmux |
 | 0.3.0-beta.3 | Bundled tmux 3.7c and Neovim 0.12.6 (`fetch-tools.sh`), native packages as fallback |
 | 0.3.0-beta.2 | Update notice: what's new and an offer to rerun `install.sh` after a deploy |
 | 0.3.0-beta.1 | VS Code tasks (Ctrl+Alt+T) with filePicker inputs; terminal title `user@host workspace`; user guide (`:Guide`) |
-| 0.3.0-beta.1 | WezTerm (CCE config, branch `clipboard-image-paste`): image paste into claude over SSH, tab shows the workspace |
+| 0.3.0-beta.1 | WezTerm (github.com/cverbiest/wezterm-config): image paste into claude over SSH, tab shows the workspace |
 
 Details per change: `RELEASE-NOTES.md`; test results and decisions: `setup-notes.md`.
 
@@ -45,8 +45,8 @@ Details per change: `RELEASE-NOTES.md`; test results and decisions: `setup-notes
   terminal (VS Code's `presentation.panel`), zoomed for ChUI. Check with users that this works for
   long ChUI sessions; a tmux window per task stays the alternative.
 - **Release 0.3.0:** 0.3.0-beta.3 is deployed (2026-10-18); release after user feedback on the task panes.
-- **WezTerm:** confirm Ctrl+Shift+click opens URLs inside abl-tmux; merge `clipboard-image-paste` into
-  `master` of the WezTerm config.
+- **WezTerm:** confirm Ctrl+Shift+click opens URLs inside abl-tmux. (Image paste is merged into `master`
+  of the WezTerm config, 2026-10-20.)
 
 ### Suggested
 

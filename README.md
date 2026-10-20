@@ -22,8 +22,8 @@ writes the version (`git describe`) to `VERSION`; run it again to update, with s
 isn't writable for you. It only writes into a new directory or an earlier copy, copies `tools/` when
 present, and says when the plugins changed.
 
-Each user runs `/opt/abl-tmux/install.sh` once (`--no-cce` outside CCE: no `APPL.env` check or
-CreateWorkspace offer; kept in `~/.config/abl-tmux/config` as `cce=0`). After a deploy, `abl-tmux` shows users what's new
+Each user runs `/opt/abl-tmux/install.sh` once. Site checks before a session opens (e.g. a workspace
+setup that isn't done yet) go in open hooks in `/etc/abl-tmux/open.d/` (user guide, Advanced). After a deploy, `abl-tmux` shows users what's new
 (from `RELEASE-NOTES.md`) and offers to rerun `install.sh`; it compares the deployed `VERSION` with
 the one `install.sh` recorded in `~/.local/state/abl-tmux/installed-version`.
 Plugins install into their own `~/.local/share/nvim-abl`, at the versions in `nvim/lazy-lock.json`;
