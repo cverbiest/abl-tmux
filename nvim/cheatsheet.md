@@ -5,7 +5,7 @@
   Ctrl+J                    switch between editor and terminal
   Alt+Z                     maximize / restore the current pane
   Mouse                     click to focus, drag borders, wheel scrolls
-  Ctrl+Click file name      in terminal/claude: open it in nvim (file:line too)
+  Ctrl+Click file name      open it in nvim, from any pane (file:line too) · gf in nvim
 
 ## Typing (nvim starts in Normal mode, where letters are commands)
   i                         start typing (Insert mode) · Esc stops

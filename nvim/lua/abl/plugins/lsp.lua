@@ -37,9 +37,7 @@ return {
                     map("n", "<F2>", vim.lsp.buf.rename, "Rename symbol")
                     map({ "n", "x" }, "<C-.>", vim.lsp.buf.code_action, "Quick fix")
                     map({ "n", "x" }, "<leader>ca", vim.lsp.buf.code_action, "Code action")
-                    map("i", "<C-S-Space>", vim.lsp.buf.signature_help, "Signature help")
-                    map("n", "<C-LeftMouse>", "<LeftMouse><cmd>lua vim.lsp.buf.definition()<cr>", "Go to definition")
-                end,
+                    map("i", "<C-S-Space>", vim.lsp.buf.signature_help, "Signature help")                end,
             })
         end,
     },

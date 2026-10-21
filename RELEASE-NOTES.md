@@ -19,6 +19,9 @@ sessions, and `abl-tmux -r` to restart claude.
   a workspace only needs its `openedge-project.json`. At CCE, the `APPL.env` check and the
   CreateWorkspace offer come as such a hook.
 - The launcher's questions are fzf lists (Enter picks, Esc stops), as in `abl-tmux --connect`.
+- **File names in the editor:** Ctrl+click on a file name opens it (`file:line` jumps to the line);
+  elsewhere Ctrl+click still goes to the definition. `gf` and Ctrl+click also find files via the
+  PROPATH of `openedge-project.json`: `RUN sub/x.p`, `{inc/defs.i}`, class names like `A.B.C`.
 - **Tasks run in task panes,** no longer in your terminal: next to it, reused as `presentation.panel`
   says (`shared`, `dedicated`, `new`), as in VS Code. When the task ends, any key closes its pane and
   you're back where you were; before, ending a Progress session left you in the zoomed terminal, and

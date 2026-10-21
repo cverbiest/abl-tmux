@@ -133,7 +133,8 @@ itself. To leave everything running and come back later: **Alt+B d** (detach), t
 | Ctrl+C (selection) | Copy to the clipboard; paste with the terminal's paste key |
 | Ctrl+G | Go to line |
 | Alt+Left/Right | Go back/forward |
-| F12, Ctrl+click | Go to definition |
+| F12, Ctrl+click | Go to definition; Ctrl+click on a file name opens the file (`file:line` too) |
+| gf | Open the file named under the cursor, also via the PROPATH (`RUN x.p`, `{inc.i}`, class names) |
 | Shift+F12 | Find references |
 | K | Hover information |
 | F2 | Rename symbol |
