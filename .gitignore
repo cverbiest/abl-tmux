@@ -7,3 +7,6 @@
 /dump/
 /.builder/
 /tty/
+
+# Files for the user to inspect (claude writes into tmp/claude/<topic>)
+/tmp/

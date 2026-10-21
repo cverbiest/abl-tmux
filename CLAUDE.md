@@ -34,6 +34,8 @@ Progress and test results: `setup-notes.md`; read it first when resuming ("do ne
 - Add user-visible changes to `RELEASE-NOTES.md` (under a new version when a deploy follows) and
   `USER-GUIDE.md`; keep "Achieved" and "To do" in `PROJECT-PLAN.md` current.
 - nvim is 0.12 (snap): use `vim.lsp.config`/`vim.lsp.enable`, nvim-treesitter `main` branch.
+- **Temporary files** (test copies, generated inputs, drafts) go in `tmp/claude/<topic>/`, not the session
+  scratchpad: the user inspects them there. `tmp/` is gitignored.
 
 ## Testing
 
@@ -45,8 +47,8 @@ Progress and test results: `setup-notes.md`; read it first when resuming ("do ne
   (`send-keys -l $'\e1'`, SGR mouse `$'\e[<16;x;yM'`); plain `send-keys` to the inner pane skips bindings.
 - **Never start nvim-abl in a real workspace (this directory, `~/workspaces/*`), not even headless for a
   non-ABL test:** nvim starts the ABL server as soon as its cwd has an `openedge-project.json`. Use a copy
-  of the project under the scratchpad, or a directory without one.
-- **Test the ABL language server in a copy of the project under the scratchpad, never in this directory.**
+  of the project under `tmp/claude/<topic>/` (gitignored, its own `openedge-project.json`), or a directory without one.
+- **Test the ABL language server in a copy of the project under `tmp/claude/<topic>/`, never in this directory itself.**
   Only one server per project compiles; others log "Project already started in another window,
   compilation will be handled there" and hand off to it, which skews results and disturbs the user's
   running session.
