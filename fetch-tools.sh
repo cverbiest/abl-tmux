@@ -8,17 +8,18 @@
 #   ABL language server: the vscode-abl extension (riversidesoftware.openedge-abl-lsp) from the
 #           VS Code Marketplace, Linux build with its own Java, unpacked into tools/ under the
 #           name VS Code uses; for users without VS Code (abl.lua takes the newest of VS Code's
-#           and this one). Newest stable version; --pre-release: newest pre-release.
+#           and this one). Newest pre-release (the channel vscode-abl users follow); --stable:
+#           newest stable version.
 # Linux x86_64/arm64 only.
 #
-# Usage: fetch-tools.sh [--pre-release]
+# Usage: fetch-tools.sh [--stable]
 set -euo pipefail
 
-prerelease=false
+prerelease=true
 case "${1:-}" in
-    --pre-release) prerelease=true ;;
-    "") ;;
-    *) echo "Usage: $0 [--pre-release]" >&2; exit 2 ;;
+    --stable) prerelease=false ;;
+    --pre-release|"") ;;
+    *) echo "Usage: $0 [--stable]" >&2; exit 2 ;;
 esac
 
 HERE=$(dirname "$(readlink -f "$0")")

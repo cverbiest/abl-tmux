@@ -10,24 +10,42 @@ window. It opens existing VS Code ABL workspaces as they are and reuses the vsco
 - **Plan, achievements, to do, gaps with vscode-abl:** [PROJECT-PLAN.md](PROJECT-PLAN.md).
 - **Development notes and test results:** [setup-notes.md](setup-notes.md).
 
+## Features highlight
+
+* Familiar for VsCode users without alienating vi users
+* Re-use existing config where possible, openedge-project.json, .vscode/tasks.json, ...
+* Paste images in claude pane
+* ...
+
+
 ## Installing and updating (admin)
 
-This is a git repo. `./fetch-tools.sh` downloads into `tools/` (not in git, about 250 MB):
-the latest stable tmux (static build from github.com/tmux/tmux-builds) and Neovim (release tarball,
-no FUSE needed), which the launcher and `install.sh` use instead of the native packages (unless
-`ABL_TMUX_NATIVE=1`); and the vscode-abl extension from the VS Code Marketplace (newest stable,
-`--pre-release` for the newest pre-release) for users without VS Code. nvim uses the newest of that
-and the user's VS Code copy. Run it again to update, then deploy. `./deploy.sh [target]` copies what users need to `/opt/abl-tmux` (or `target`) and
-writes the version (`git describe`) to `VERSION`; run it again to update, with sudo when the target
-isn't writable for you. It only writes into a new directory or an earlier copy, copies `tools/` when
-present, and says when the plugins changed.
+* `./fetch-tools.sh` downloads into `tools/` (not in git, about 250 MB):
+  * latest stable tmux (static, github.com/tmux/tmux-builds) and Neovim (release tarball, no FUSE),
+    used instead of the native packages unless `ABL_TMUX_NATIVE=1`
+  * the vscode-abl extension (Marketplace pre-release, `--stable` for stable), for users without
+    VS Code; nvim takes the newest of this and the user's VS Code copy
+* `./deploy.sh [target]` copies what users need to `/opt/abl-tmux` (or `target`) and writes `VERSION`
+  (`git describe`). Use sudo when the target isn't writable. It only writes into a new directory or an earlier copy, takes
+  `tools/` along and says when the plugins changed.
+* Each user runs `/opt/abl-tmux/install.sh` once. After a deploy, `abl-tmux` shows what's new and offers
+  to rerun it.
+* Site checks before a session opens (e.g. an unfinished workspace setup): open hooks in
+  `/etc/abl-tmux/open.d/` (user guide, Advanced).
+* Plugins install into `~/.local/share/nvim-abl`, at the versions in `nvim/lazy-lock.json`.
 
-Each user runs `/opt/abl-tmux/install.sh` once. Site checks before a session opens (e.g. a workspace
-setup that isn't done yet) go in open hooks in `/etc/abl-tmux/open.d/` (user guide, Advanced). After a deploy, `abl-tmux` shows users what's new
-(from `RELEASE-NOTES.md`) and offers to rerun `install.sh`; it compares the deployed `VERSION` with
-the one `install.sh` recorded in `~/.local/state/abl-tmux/installed-version`.
-Plugins install into their own `~/.local/share/nvim-abl`, at the versions in `nvim/lazy-lock.json`;
-when they can't write the shared copy, lazy keeps their lockfile there too.
+To update: run `fetch-tools.sh` and `deploy.sh` again.
+
+## WezTerm terminal
+
+abl-tmux works in any terminal of at least 160 columns, but some features require terminal configuration.
+
+A matching WezTerm config is at [github.com/cverbiest/wezterm-config](https://github.com/cverbiest/wezterm-config).
+It adds:
+* Ctrl+Alt+V pastes a clipboard image into claude as a file path (uploaded to the server on SSH panes)
+* the tab shows the workspace
+
+See [WezTerm](USER-GUIDE.md#wezterm) in the user guide.
 
 ## Repository
 
@@ -46,7 +64,7 @@ when they can't write the shared copy, lazy keeps their lockfile there too.
 
 ## License
 
-MIT, see [LICENSE](LICENSE). This covers the files in this repository. What `fetch-tools.sh` downloads
-into `tools/` (and `deploy.sh` copies along) keeps its own license: tmux (ISC), Neovim (Apache 2.0 and
-Vim license) and the vscode-abl extension (MIT; the ABL language server in it is Riverside Software's,
-under their terms).
+MIT, see [LICENSE](LICENSE), for the files in this repository. The downloads in `tools/` keep their own:
+* tmux: ISC
+* Neovim: Apache 2.0 and Vim license
+* vscode-abl extension: MIT; its ABL language server is Riverside Software's, under their terms

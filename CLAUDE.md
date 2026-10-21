@@ -69,5 +69,5 @@ Progress and test results: `setup-notes.md`; read it first when resuming ("do ne
 - tmux/nvim: bundled `tools/bin` (3.7c / 0.12.6) or native (`/usr/bin/tmux` 3.2a, snap nvim 0.12.5).
 - OpenEdge: `/usr/oe128` (12.8, = `/usr/oe12811`), `/usr/oe122`; `DLC=/usr/dlc`. Runtimes are listed in `abl.lua`.
 - ABL language server: `~/.vscode-server/extensions/riversidesoftware.openedge-abl-lsp-*` (unlicensed; the user
-  follows the pre-release channel, 1.37.x) or `tools/` (Marketplace stable, 1.36.0).
+  follows the pre-release channel, 1.37.x) or `tools/` (Marketplace pre-release by default, `fetch-tools.sh --stable`: 1.36.0).
 - tree-sitter-abl: `~/projects/tree-sitter-abl` (no highlight queries; parses too little real code to use yet).
