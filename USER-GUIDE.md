@@ -166,6 +166,9 @@ usual (Ctrl+A/F/D/W/V, `gd`, `grn`, `gra`, `grr`).
   the newest of your VS Code's copy (`~/.vscode-server/extensions`) and the one that comes with abl-tmux;
   with equal versions your VS Code's. `abl-tmux -V` shows which one. It starts with the workspace, as in VS Code, and
   stops with the editor. `:lsp restart abl` restarts it, e.g. after changing settings.
+- **Status:** the statusline shows what the language server is doing, as in VS Code's status bar:
+  `ABL starting…`, `ABL init 0/1` (loading the project), `ABL ◐ 12 task(s)` (compiling), `ABL ✓` (idle),
+  `ABL ✗ not running`, or `ABL ✗ no status` when the server stopped reporting (every ~9 s).
 - **Project and settings:** `openedge-project.json` as in VS Code (PROPATH, databases, profiles), and the
   `abl.*` settings from VS Code: the remote machine settings, the `.code-workspace` file, then
   `.vscode/settings.json` (runtimes, Java, extra Java arguments).
@@ -299,4 +302,5 @@ shows the version; the full list of changes is in `RELEASE-NOTES.md` next to it.
 | claude doesn't see the editor | Type `/ide` in claude |
 | A key does nothing | Some keys (Ctrl+Shift+…) depend on the terminal; use the Space alternative. `Space f k` lists all keys |
 | The editor didn't pick up a file claude changed | Click into the editor or switch to the file; it reloads when you return to it |
-| Language server log | `:LspLog` in the editor |
+| Language server log | `:LspLog` in the editor; `:AblDumpStatus` adds the server's internal state |
+| Statusline says `ABL ✗ no status` or `ABL ✗ not running` | The language server hung or stopped: `:lsp restart abl`, and look in `:LspLog` |
