@@ -6,6 +6,9 @@ sessions, and `abl-tmux -r` to restart claude.
 
 ## Unreleased
 
+- **Language server status** in the statusline, as in VS Code's status bar: `ABL starting…`,
+  `ABL init 0/1`, `ABL ◐ 12 task(s)` while it compiles, `ABL ✓` when idle, `ABL ✗ not running` or
+  `ABL ✗ no status` (no report for 20 s). `:AblDumpStatus` writes the server's state to `:LspLog`.
 - **No VS Code needed:** abl-tmux brings the vscode-abl language server along (newest pre-release from
   the Marketplace, `fetch-tools.sh --stable` for stable) and uses it when VS Code's copy is missing or
   older. `abl-tmux -V` shows which one.
